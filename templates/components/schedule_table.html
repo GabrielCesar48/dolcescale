@@ -30,7 +30,7 @@
                         {{ duty.duty_type.name }}
                     </td>
                     <td>{{ duty.duty_type.time|time:"H:i" }}</td>
-                    <td>{{ duty.member.name }}</td>
+                    <td>{{ duty.member }}</td>
                     <td>
                         {% if duty.completed %}
                             <span class="badge bg-success">Concluída</span>
