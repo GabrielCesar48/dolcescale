@@ -2,19 +2,41 @@
 
 <footer class="footer mt-5 py-4">
     <div class="container">
-        <div class="row">
-            <div class="col-md-6 text-center text-md-start">
-                <p class="mb-0">&copy; {% now "Y" %} DolceScale - Sistema de Escala para Dolce Gusto</p>
-                <p class="small text-muted">Desenvolvido para equipe de TI</p>
+        <div class="row align-items-center">
+            <div class="col-md-4 text-center text-md-start mb-3 mb-md-0">
+                <a href="{% url 'home' %}" class="d-inline-block text-decoration-none mb-2">
+                    <h5 class="text-cream m-0 d-flex align-items-center">
+                        <i class="bi bi-cup-hot me-2"></i>DolceScale
+                    </h5>
+                </a>
+                <p class="small text-cream opacity-75 mb-0">Sistema de Escala para Dolce Gusto</p>
             </div>
-            <div class="col-md-6 text-center text-md-end">
-                <p class="mb-0">
+            
+            <div class="col-md-4 text-center mb-3 mb-md-0">
+                <p class="mb-0 text-cream">
                     <i class="bi bi-cup-hot me-1"></i>Mantenha o café sempre fresco
                 </p>
-                <p class="small text-muted">
-                    <span class="badge bg-secondary">v1.0.0</span>
-                </p>
+                <div class="mt-2">
+                    <span class="badge bg-coffee-light">
+                        v1.0.0
+                    </span>
+                </div>
+            </div>
+            
+            <div class="col-md-4 text-center text-md-end">
+                <p class="mb-0 text-cream">&copy; {% now "Y" %} DolceScale</p>
+                <p class="small text-cream opacity-75">Desenvolvido por Gabriel Pereira</p>
             </div>
         </div>
     </div>
 </footer>
+
+<style>
+    .bg-coffee-light {
+        background-color: var(--coffee-light);
+    }
+    
+    .text-cream {
+        color: var(--cream);
+    }
+</style>

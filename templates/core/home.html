@@ -8,7 +8,7 @@
 <!-- Hero Section -->
 <section class="hero-section">
     <div class="container">
-        <h1 class="hero-title">Escala Dolce Gusto TI</h1>
+        <h1 class="hero-title">Escala Manutenção Dolce Gusto ADM/TI</h1>
         <div class="divider"></div>
         <p class="hero-subtitle">Mantenha o café sempre fresco e a máquina sempre limpa</p>
         <a href="#today" class="btn btn-coffee btn-lg">
@@ -22,9 +22,9 @@
     <!-- Today's Schedule -->
     <div class="row mb-5">
         <div class="col-12 text-center mb-4">
-            <span class="today-label">
+            <div class="today-label">
                 <i class="bi bi-calendar-check me-1"></i>Hoje: {{ today_date|date:"d/m/Y" }}
-            </span>
+            </div>
             <h2>Escala do Dia</h2>
             <div class="divider"></div>
             <p class="text-muted">Quem está responsável pela nossa Dolce Gusto hoje</p>
@@ -33,9 +33,13 @@
         {% for duty in today_duties %}
             {% include 'components/duty_card.html' with duty=duty %}
         {% empty %}
-            <div class="col-12 text-center">
-                <div class="alert alert-info">
-                    <i class="bi bi-info-circle me-2"></i>Não há tarefas agendadas para hoje.
+            <div class="col-12">
+                <div class="empty-state text-center py-5">
+                    <div class="empty-icon mb-3">
+                        <i class="bi bi-calendar-x display-1 text-muted"></i>
+                    </div>
+                    <h4>Não há tarefas agendadas para hoje</h4>
+                    <p class="text-muted">Talvez seja feriado ou final de semana.</p>
                 </div>
             </div>
         {% endfor %}
@@ -56,33 +60,73 @@
     <!-- Stats Cards -->
     <div class="row mt-5">
         <div class="col-md-3 col-6 text-center mb-4">
-            <div class="bg-white p-4 rounded-4 shadow-sm h-100">
-                <i class="bi bi-cup-hot display-4 mb-3" style="color: var(--coffee-light);"></i>
-                <p class="stats-number">{{ stats.total_coffees }}</p>
-                <p class="stats-label">CAFÉS SERVIDOS</p>
+            <div class="card h-100 animated-bg">
+                <div class="card-body d-flex flex-column justify-content-center align-items-center py-4">
+                    <div class="mb-3">
+                        <i class="bi bi-cup-hot display-4" style="color: var(--coffee-light);"></i>
+                    </div>
+                    <p class="stats-number mb-1">{{ stats.total_coffees }}</p>
+                    <p class="stats-label">CAFÉS SERVIDOS</p>
+                </div>
             </div>
         </div>
         <div class="col-md-3 col-6 text-center mb-4">
-            <div class="bg-white p-4 rounded-4 shadow-sm h-100">
-                <i class="bi bi-droplet display-4 mb-3" style="color: var(--coffee-light);"></i>
-                <p class="stats-number">{{ stats.total_cleanings }}</p>
-                <p class="stats-label">LIMPEZAS REALIZADAS</p>
+            <div class="card h-100 animated-bg">
+                <div class="card-body d-flex flex-column justify-content-center align-items-center py-4">
+                    <div class="mb-3">
+                        <i class="bi bi-droplet display-4" style="color: var(--coffee-light);"></i>
+                    </div>
+                    <p class="stats-number mb-1">{{ stats.total_cleanings }}</p>
+                    <p class="stats-label">LIMPEZAS REALIZADAS</p>
+                </div>
             </div>
         </div>
         <div class="col-md-3 col-6 text-center mb-4">
-            <div class="bg-white p-4 rounded-4 shadow-sm h-100">
-                <i class="bi bi-people display-4 mb-3" style="color: var(--coffee-light);"></i>
-                <p class="stats-number">{{ stats.team_members }}</p>
-                <p class="stats-label">MEMBROS NA EQUIPE</p>
+            <div class="card h-100 animated-bg">
+                <div class="card-body d-flex flex-column justify-content-center align-items-center py-4">
+                    <div class="mb-3">
+                        <i class="bi bi-people display-4" style="color: var(--coffee-light);"></i>
+                    </div>
+                    <p class="stats-number mb-1">{{ stats.team_members }}</p>
+                    <p class="stats-label">MEMBROS NA EQUIPE</p>
+                </div>
             </div>
         </div>
         <div class="col-md-3 col-6 text-center mb-4">
-            <div class="bg-white p-4 rounded-4 shadow-sm h-100">
-                <i class="bi bi-calendar-event display-4 mb-3" style="color: var(--coffee-light);"></i>
-                <p class="stats-number">{{ stats.holidays }}</p>
-                <p class="stats-label">FERIADOS CADASTRADOS</p>
+            <div class="card h-100 animated-bg">
+                <div class="card-body d-flex flex-column justify-content-center align-items-center py-4">
+                    <div class="mb-3">
+                        <i class="bi bi-calendar-event display-4" style="color: var(--coffee-light);"></i>
+                    </div>
+                    <p class="stats-number mb-1">{{ stats.holidays }}</p>
+                    <p class="stats-label">FERIADOS CADASTRADOS</p>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .empty-state {
+        background-color: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .empty-icon {
+        color: var(--gray-300);
+    }
+    
+    .today-label {
+        display: inline-block;
+        background-color: var(--cream);
+        color: var(--coffee-dark);
+        padding: 0.5rem 1.5rem;
+        border-radius: 30px;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        box-shadow: var(--shadow-sm);
+        transform: translateY(-50%);
+    }
+</style>
 {% endblock %}
