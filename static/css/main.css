@@ -1,0 +1,31 @@
+/* static/css/main.css */
+
+:root {
+    --coffee-dark: #3A2618;
+    --coffee-medium: #6F4E37;
+    --coffee-light: #9B7653;
+    --cream: #FFFDD0;
+    --milk: #F5F5F5;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--milk);
+    color: #333;
+}
+
+h1, h2, h3, h4, h5 {
+    font-family: 'Playfair Display', serif;
+}
+
+.navbar {
+    background-color: var(--coffee-dark);
+}
+
+.navbar-brand {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    color: var(--cream);
+}
+
+/* E o restante do CSS do template... */

@@ -1,0 +1,88 @@
+<!-- templates/core/home.html -->
+
+{% extends 'base.html' %}
+
+{% block title %}DolceScale - Início{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <h1 class="hero-title">Escala Dolce Gusto TI</h1>
+        <div class="divider"></div>
+        <p class="hero-subtitle">Mantenha o café sempre fresco e a máquina sempre limpa</p>
+        <a href="#today" class="btn btn-coffee btn-lg">
+            <i class="bi bi-cup-hot me-2"></i>Ver escala de hoje
+        </a>
+    </div>
+</section>
+
+<!-- Main Content -->
+<div class="container" id="today">
+    <!-- Today's Schedule -->
+    <div class="row mb-5">
+        <div class="col-12 text-center mb-4">
+            <span class="today-label">
+                <i class="bi bi-calendar-check me-1"></i>Hoje: {{ today_date|date:"d/m/Y" }}
+            </span>
+            <h2>Escala do Dia</h2>
+            <div class="divider"></div>
+            <p class="text-muted">Quem está responsável pela nossa Dolce Gusto hoje</p>
+        </div>
+        
+        {% for duty in today_duties %}
+            {% include 'components/duty_card.html' with duty=duty %}
+        {% empty %}
+            <div class="col-12 text-center">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>Não há tarefas agendadas para hoje.
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Próximos Dias -->
+    <div class="row mb-4">
+        <div class="col-12 text-center mb-4">
+            <h2>Próximos 7 Dias</h2>
+            <div class="divider"></div>
+            <p class="text-muted">Planeje-se! Confira quando será a sua vez de cuidar da nossa máquina</p>
+        </div>
+    </div>
+    
+    <!-- Include da tabela de cronograma -->
+    {% include 'components/schedule_table.html' with duties=upcoming_duties %}
+    
+    <!-- Stats Cards -->
+    <div class="row mt-5">
+        <div class="col-md-3 col-6 text-center mb-4">
+            <div class="bg-white p-4 rounded-4 shadow-sm h-100">
+                <i class="bi bi-cup-hot display-4 mb-3" style="color: var(--coffee-light);"></i>
+                <p class="stats-number">{{ stats.total_coffees }}</p>
+                <p class="stats-label">CAFÉS SERVIDOS</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 text-center mb-4">
+            <div class="bg-white p-4 rounded-4 shadow-sm h-100">
+                <i class="bi bi-droplet display-4 mb-3" style="color: var(--coffee-light);"></i>
+                <p class="stats-number">{{ stats.total_cleanings }}</p>
+                <p class="stats-label">LIMPEZAS REALIZADAS</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 text-center mb-4">
+            <div class="bg-white p-4 rounded-4 shadow-sm h-100">
+                <i class="bi bi-people display-4 mb-3" style="color: var(--coffee-light);"></i>
+                <p class="stats-number">{{ stats.team_members }}</p>
+                <p class="stats-label">MEMBROS NA EQUIPE</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 text-center mb-4">
+            <div class="bg-white p-4 rounded-4 shadow-sm h-100">
+                <i class="bi bi-calendar-event display-4 mb-3" style="color: var(--coffee-light);"></i>
+                <p class="stats-number">{{ stats.holidays }}</p>
+                <p class="stats-label">FERIADOS CADASTRADOS</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
