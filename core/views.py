@@ -2,6 +2,7 @@
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import login, authenticate, update_session_auth_hash
 from django.utils import timezone
 from datetime import timedelta, date
 from django.contrib import messages
@@ -9,34 +10,20 @@ from django.http import JsonResponse
 from django.db.models import Count
 
 from .models import TeamMember, Holiday, DutyType, DutySchedule
-from .forms import HolidayForm, DutyScheduleForm
-
-# core/views.py - Atualize a função home_view
+from .forms import HolidayForm, DutyScheduleForm, ProfileForm, CustomPasswordChangeForm
 
 def home_view(request):
-    """Página inicial com visão geral das atividades do dia e próximos dias úteis"""
+    """Página inicial com visão geral das atividades do dia"""
     today = timezone.now().date()
     
     # Busca as tarefas de hoje
     today_duties = DutySchedule.objects.filter(date=today).select_related('member', 'duty_type')
     
-    # Busca os feriados cadastrados
-    holidays = Holiday.objects.filter(
-        date__gte=today
-    ).values_list('date', flat=True)
-    
-    # Encontra os próximos 7 dias úteis (excluindo finais de semana e feriados)
-    upcoming_dates = []
-    current_date = today
-    while len(upcoming_dates) < 7:  # Queremos exatamente 7 dias úteis
-        # Verifica se não é final de semana (0=segunda, 6=domingo)
-        if current_date.weekday() < 5 and current_date not in holidays:
-            upcoming_dates.append(current_date)
-        current_date += timedelta(days=1)
-    
-    # Busca as tarefas para os próximos 7 dias úteis
+    # Busca as próximas 7 dias de tarefas
+    end_date = today + timedelta(days=6)  # 7 dias incluindo hoje
     upcoming_duties = DutySchedule.objects.filter(
-        date__in=upcoming_dates
+        date__gte=today,
+        date__lte=end_date
     ).select_related('member', 'duty_type').order_by('date', 'duty_type__time')
     
     # Estatísticas
@@ -143,81 +130,58 @@ def mark_completed(request, duty_id):
     messages.success(request, f'Tarefa marcada como {"concluída" if duty.completed else "pendente"}.')
     return redirect('home')
 
-
-
-@login_required
-def team_member_list(request):
-    """Lista de membros da equipe"""
-    members = TeamMember.objects.all().order_by('name')
-    
-    return render(request, 'core/team_member_list.html', {
-        'members': members
-    })
-
-@login_required
-def team_member_create(request):
-    """Cadastro de novo membro da equipe"""
+def login_view(request):
+    """View para login de usuário"""
     if request.method == 'POST':
-        form = TeamMemberForm(request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Membro cadastrado com sucesso.')
-            return redirect('team_member_list')
-    else:
-        form = TeamMemberForm()
-    
-    return render(request, 'core/team_member_form.html', {
-        'form': form,
-        'title': 'Novo Membro'
-    })
-
-@login_required
-def team_member_edit(request, pk):
-    """Edição de membro existente"""
-    member = get_object_or_404(TeamMember, pk=pk)
-    
-    if request.method == 'POST':
-        form = TeamMemberForm(request.POST, instance=member)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Membro atualizado com sucesso.')
-            return redirect('team_member_list')
-    else:
-        form = TeamMemberForm(instance=member)
-    
-    return render(request, 'core/team_member_form.html', {
-        'form': form,
-        'member': member,
-        'title': 'Editar Membro'
-    })
-
-@login_required
-def team_member_toggle_active(request, pk):
-    """Ativar/desativar um membro da equipe"""
-    member = get_object_or_404(TeamMember, pk=pk)
-    member.is_active = not member.is_active
-    member.save()
-    
-    status = "ativado" if member.is_active else "desativado"
-    messages.success(request, f'Membro {member.name} {status} com sucesso.')
-    return redirect('team_member_list')
-
-@login_required
-def generate_schedule(request):
-    """View para gerar escala manualmente"""
-    if request.method == 'POST':
-        days = int(request.POST.get('days', 30))
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        next_url = request.POST.get('next', 'home')
         
-        generator = ScheduleGenerator(days_to_generate=days)
-        created = generator.generate_schedule()
-        
-        if created:
-            messages.success(request, f'Sucesso! {created} escalas foram geradas.')
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            messages.success(request, f'Bem-vindo, {user.get_full_name() or user.username}!')
+            return redirect(next_url)
         else:
-            messages.warning(request, 'Nenhuma escala foi gerada. Verifique se existem membros ativos e tipos de tarefa configurados.')
-        
-        return redirect('schedule')
+            messages.error(request, 'Nome de usuário ou senha incorretos.')
     
-    return render(request, 'core/generate_schedule.html', {
-        'title': 'Gerar Escala'
+    return render(request, 'core/login.html')
+
+@login_required
+def profile_view(request):
+    """View para edição de perfil do usuário"""
+    try:
+        team_member = TeamMember.objects.get(user=request.user)
+    except TeamMember.DoesNotExist:
+        messages.error(request, "Perfil de membro não encontrado para este usuário.")
+        return redirect('home')
+    
+    if request.method == 'POST':
+        form_type = request.POST.get('form_type')
+        
+        if form_type == 'profile':
+            profile_form = ProfileForm(request.POST, request.FILES, instance=team_member)
+            password_form = CustomPasswordChangeForm(request.user)
+            
+            if profile_form.is_valid():
+                profile_form.save()
+                messages.success(request, 'Seu perfil foi atualizado com sucesso!')
+                return redirect('profile')
+        
+        elif form_type == 'password':
+            profile_form = ProfileForm(instance=team_member)
+            password_form = CustomPasswordChangeForm(request.user, request.POST)
+            
+            if password_form.is_valid():
+                user = password_form.save()
+                update_session_auth_hash(request, user)
+                messages.success(request, 'Sua senha foi atualizada com sucesso!')
+                return redirect('profile')
+    else:
+        profile_form = ProfileForm(instance=team_member)
+        password_form = CustomPasswordChangeForm(request.user)
+    
+    return render(request, 'core/profile.html', {
+        'profile_form': profile_form,
+        'password_form': password_form,
     })

@@ -183,6 +183,9 @@ a:hover {
     font-weight: 800;
     margin-bottom: 1rem;
     animation: fadeInUp 1s ease;
+    color: var(--cream) !important;
+    animation-fill-mode: both;
+    opacity: 0.9;
 }
 
 .hero-subtitle {
@@ -552,3 +555,110 @@ a:hover {
 .animated-bg:hover:before {
     transform: rotate(30deg) translate(10%, 10%);
 }
+
+
+/* static/css/main.css (adicionando novos estilos) */
+
+:root {
+    --coffee-dark: #3A2618;
+    --coffee-medium: #6F4E37;
+    --coffee-light: #9B7653;
+    --cream: #FFFDD0;
+    --milk: #F5F5F5;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--milk);
+    color: #333;
+}
+
+h1, h2, h3, h4, h5 {
+    font-family: 'Playfair Display', serif;
+}
+
+.navbar {
+    background-color: var(--coffee-dark);
+}
+
+.navbar-brand {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    color: var(--cream);
+}
+
+/* Novos estilos para o avatar e componentes de perfil */
+.profile-avatar {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border: 3px solid var(--coffee-medium);
+}
+
+.member-avatar {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border: 2px solid var(--coffee-light);
+    border-radius: 50%;
+}
+
+.navbar-avatar {
+    width: 24px;
+    height: 24px;
+    object-fit: cover;
+    border: 1px solid var(--cream);
+}
+
+/* Estilos para a lista de tarefas */
+.task-list {
+    background-color: rgba(155, 118, 83, 0.1);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.task-list h5 {
+    color: var(--coffee-medium);
+    font-size: 1rem;
+}
+
+.task-list ul {
+    padding-left: 20px;
+    margin-bottom: 0;
+}
+
+/* Estilos para badges */
+.badge-morning {
+    background-color: #f8d775;
+    color: #5a4a23;
+}
+
+.badge-evening {
+    background-color: #6e9eff;
+    color: #1a3b7d;
+}
+
+/* Estilos para botões */
+.btn-coffee {
+    background-color: var(--coffee-medium);
+    color: white;
+}
+
+.btn-coffee:hover {
+    background-color: var(--coffee-dark);
+    color: white;
+}
+
+.bg-coffee-medium {
+    background-color: var(--coffee-medium);
+}
+
+/* Divider personalizado */
+.divider {
+    height: 3px;
+    width: 60px;
+    background-color: var(--coffee-light);
+    margin: 0.5rem auto 1.5rem auto;
+}
+
+/* E o restante do CSS do template... */

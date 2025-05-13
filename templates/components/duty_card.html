@@ -16,10 +16,7 @@
             {% else %}
                 <img src="/api/placeholder/120/120" alt="{{ duty.member }}" class="member-avatar mb-3">
             {% endif %}
-            <h4 class="card-title mb-1">{{ duty.member.name }}</h4>
-            <p class="text-muted mb-3">
-                {{ duty.member.email }}
-            </p>
+            <h4 class="card-title mb-1">{{ duty.member }}</h4>
             
             <span class="badge {% if 'Reabastecimento' in duty.duty_type.name %}badge-morning{% else %}badge-evening{% endif %}">
                 {% if 'Reabastecimento' in duty.duty_type.name %}
@@ -32,23 +29,35 @@
             
             <hr>
             
-            <p class="card-text mt-3 mb-0">
-                {% if duty.completed %}
-                    <i class="bi bi-check-circle-fill text-success me-2"></i>Tarefa Concluída
-                {% elif duty.notification_sent %}
-                    <i class="bi bi-envelope-check text-info me-2"></i>Notificação Enviada
+            <div class="task-list mt-3 text-start">
+                {% if 'Reabastecimento' in duty.duty_type.name %}
+                    <h5><i class="bi bi-clock me-2"></i>Manutenção Matinal da Máquina Dolce Gusto</h5>
+                    <ul class="small">
+                        <li>Trocar a água do reservatório da máquina por água limpa.</li>
+                        <li>Substituir e lavar a <strong>jarra de vidro</strong> usada para reabastecer.</li>
+                        <li>Colocar uma <strong>nova sacola no lixo</strong> para uso durante o dia.</li>
+                        <li>Higienizar a mesa com álcool para evitar a presença de formigas.</li>
+                    </ul>
                 {% else %}
-                    <i class="bi bi-hourglass-split text-warning me-2"></i>Notificação Pendente
+                    <h5><i class="bi bi-clock me-2"></i>Manutenção da Tarde da Máquina Dolce Gusto</h5>
+                    <ul class="small">
+                        <li>Limpar o <strong>suporte de copos</strong> da máquina.</li>
+                        <li>Esvaziar o lixo e descartar corretamente.</li>
+                        <li>Limpar o <strong>suporte de cápsulas usadas</strong>.</li>
+                        <li>Substituir e lavar a <strong>jarra de vidro</strong> e o <strong>reservatório de água</strong> da máquina para o próximo uso.</li>
+                    </ul>
                 {% endif %}
-            </p>
+            </div>
             
-            <p class="small text-muted">
-                {% if duty.notification_sent %}
-                    Enviado por Email
-                {% else %}
-                    Prevista para {{ duty.duty_type.time|time:"H:i" }} - Email
-                {% endif %}
-            </p>
+            <div class="mt-3">
+                <p class="card-text mb-0">
+                    {% if duty.completed %}
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>Tarefa Concluída
+                    {% else %}
+                        <i class="bi bi-hourglass-split text-warning me-2"></i>Pendente
+                    {% endif %}
+                </p>
+            </div>
             
             {% if user.is_authenticated %}
                 <div class="mt-3">
