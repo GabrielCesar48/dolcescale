@@ -1,0 +1,241 @@
+<!-- templates/core/holiday_list.html -->
+{% extends 'base.html' %}
+
+{% block title %}DolceScale - Feriados{% endblock %}
+
+{% block content %}
+<!-- Hero Section Compacto -->
+<section class="hero-section" style="padding: 3rem 0;">
+    <div class="container">
+        <h1 class="hero-title">Feriados</h1>
+        <div class="divider"></div>
+        <p class="hero-subtitle">Gerenciamento de feriados e dias sem escala</p>
+    </div>
+</section>
+
+<!-- Conteúdo Principal -->
+<div class="container">
+    <!-- Botão de Adição -->
+    <div class="row mb-4">
+        <div class="col-12 text-end">
+            <a href="{% url 'holiday_create' %}" class="btn btn-coffee">
+                <i class="bi bi-plus-circle me-2"></i>Novo Feriado
+            </a>
+        </div>
+    </div>
+    
+    <!-- Próximos Feriados -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-coffee-medium text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-calendar-event me-2"></i>Próximos Feriados</h5>
+                    <span class="badge bg-light text-dark">{{ holidays|length }} feriado(s)</span>
+                </div>
+                <div class="card-body p-0">
+                    {% if holidays %}
+                    <div class="table-responsive">
+                        <table class="table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Dia da Semana</th>
+                                    <th>Nome</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for holiday in holidays %}
+                                <tr>
+                                    <td>{{ holiday.date|date:"d/m/Y" }}</td>
+                                    <td>{{ holiday.date|date:"l"|title }}</td>
+                                    <td>
+                                        <span class="holiday-name">{{ holiday.name }}</span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'holiday_edit' holiday.id %}" class="btn btn-sm btn-outline-coffee me-1">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        {% if user.is_staff %}
+                                        <a href="{% url 'admin:core_holiday_delete' holiday.id %}" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-state text-center py-5">
+                        <i class="bi bi-calendar-x display-1 text-muted mb-3"></i>
+                        <h4>Nenhum feriado próximo</h4>
+                        <p class="text-muted">Não há feriados cadastrados para os próximos dias.</p>
+                        <a href="{% url 'holiday_create' %}" class="btn btn-coffee mt-2">
+                            <i class="bi bi-plus-circle me-2"></i>Adicionar Feriado
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Feriados Passados (Colapsável) -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-coffee-light text-white">
+                    <button class="btn btn-link text-white w-100 text-start d-flex justify-content-between align-items-center" 
+                            data-bs-toggle="collapse" data-bs-target="#pastHolidays" aria-expanded="false">
+                        <h5 class="mb-0"><i class="bi bi-calendar-x me-2"></i>Feriados Passados</h5>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                </div>
+                <div id="pastHolidays" class="collapse">
+                    <div class="card-body p-0">
+                        {% if past_holidays %}
+                        <div class="table-responsive">
+                            <table class="table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Dia da Semana</th>
+                                        <th>Nome</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for holiday in past_holidays %}
+                                    <tr class="text-muted">
+                                        <td>{{ holiday.date|date:"d/m/Y" }}</td>
+                                        <td>{{ holiday.date|date:"l"|title }}</td>
+                                        <td>
+                                            <span class="holiday-name faded">{{ holiday.name }}</span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="empty-state text-center py-4">
+                            <p class="text-muted mb-0">Não há feriados passados registrados.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Dicas Úteis -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h5><i class="bi bi-lightbulb me-2"></i>Dicas</h5>
+                    <ul class="mb-0">
+                        <li>Adicione feriados com antecedência para o sistema não gerar escalas nessas datas.</li>
+                        <li>As datas de feriados são consideradas na geração automática de escalas.</li>
+                        <li>Você pode cadastrar eventos específicos da empresa como "feriados" para evitar escalas nesses dias.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Formulário de Feriado (Modal) -->
+<div class="modal fade" id="holidayModal" tabindex="-1" aria-labelledby="holidayModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-coffee-medium text-white">
+                <h5 class="modal-title" id="holidayModalLabel"><i class="bi bi-calendar-plus me-2"></i>Novo Feriado</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" action="{% url 'holiday_create' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="id_date" class="form-label">Data</label>
+                        <input type="date" name="date" id="id_date" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_name" class="form-label">Nome do Feriado</label>
+                        <input type="text" name="name" id="id_name" class="form-control" required>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-coffee">
+                            <i class="bi bi-save me-2"></i>Salvar Feriado
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.holiday-name {
+    background-color: rgba(155, 118, 83, 0.1);
+    color: var(--coffee-dark);
+    padding: 0.3rem 0.8rem;
+    border-radius: 50px;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.holiday-name.faded {
+    opacity: 0.7;
+}
+
+.empty-state {
+    padding: 2rem 0;
+}
+
+.empty-state i {
+    display: block;
+}
+
+/* Estilo para o botão expansível */
+.btn-link {
+    text-decoration: none;
+    padding: 0.75rem 1rem;
+}
+
+.btn-link:hover {
+    text-decoration: none;
+}
+
+.btn-link:focus {
+    box-shadow: none;
+}
+</style>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Verificar se há parâmetro para abrir o modal
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('add') === 'true') {
+        const holidayModal = new bootstrap.Modal(document.getElementById('holidayModal'));
+        holidayModal.show();
+    }
+    
+    // Animação para as linhas da tabela
+    const tableRows = document.querySelectorAll('tbody tr');
+    tableRows.forEach((row, index) => {
+        row.style.opacity = '0';
+        row.style.transform = 'translateY(10px)';
+        
+        setTimeout(() => {
+            row.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            row.style.opacity = '1';
+            row.style.transform = 'translateY(0)';
+        }, 100 + (index * 50));
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

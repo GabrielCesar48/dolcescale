@@ -1,0 +1,303 @@
+<!-- templates/core/schedule.html -->
+{% extends 'base.html' %}
+
+{% block title %}DolceScale - Cronograma Completo{% endblock %}
+
+{% block content %}
+<!-- Hero Section Compacto -->
+<section class="hero-section" style="padding: 3rem 0;">
+    <div class="container">
+        <h1 class="hero-title">Cronograma Completo</h1>
+        <div class="divider"></div>
+        <p class="hero-subtitle">Planejamento de escala para os próximos {{ days|default:"30" }} dias</p>
+    </div>
+</section>
+
+<!-- Conteúdo Principal -->
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <!-- Estatísticas do período -->
+            <div class="date-range-label">
+                <i class="bi bi-calendar-range me-2"></i>
+                De {{ start_date|date:"d/m/Y" }} até {{ end_date|date:"d/m/Y" }}
+            </div>
+        </div>
+        <div class="col-md-4 text-md-end">
+            {% if user.is_staff %}
+            <div class="mb-3">
+                <a href="{% url 'admin:core_dutyschedule_changelist' %}" class="btn btn-outline-coffee">
+                    <i class="bi bi-gear me-2"></i>Gerenciar Escalas
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Feriados no período -->
+    {% if holidays %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-coffee-light text-white">
+                    <h5 class="mb-0"><i class="bi bi-calendar-check me-2"></i>Feriados no Período</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for holiday in holidays %}
+                        <div class="col-md-4 col-lg-3 mb-2">
+                            <div class="holiday-badge">
+                                <span class="date">{{ holiday.date|date:"d/m" }}</span>
+                                <span class="day">{{ holiday.date|date:"l"|title }}</span>
+                                <span class="name">{{ holiday.name }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Tabela de Cronograma -->
+    <div class="row">
+        <div class="col-12">
+            <div class="schedule-card">
+                <div class="filters mb-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-6 mb-2 mb-md-0">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" id="scheduleSearch" class="form-control" placeholder="Buscar...">
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 text-md-end">
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-outline-coffee filter-btn active" data-filter="all">Todos</button>
+                                <button type="button" class="btn btn-outline-coffee filter-btn" data-filter="morning">Manhã</button>
+                                <button type="button" class="btn btn-outline-coffee filter-btn" data-filter="evening">Tarde</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover" id="scheduleTable">
+                        <thead>
+                            <tr>
+                                <th scope="col">Data</th>
+                                <th scope="col">Dia</th>
+                                <th scope="col">Tarefa</th>
+                                <th scope="col">Horário</th>
+                                <th scope="col">Responsável</th>
+                                <th scope="col">Status</th>
+                                {% if user.is_authenticated %}
+                                <th scope="col">Ações</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for duty in duties %}
+                            <tr class="duty-row {% if 'Reabastecimento' in duty.duty_type.name %}morning-duty{% else %}evening-duty{% endif %}">
+                                <td>{{ duty.date|date:"d/m/Y" }}</td>
+                                <td>{{ duty.date|date:"l"|title }}</td>
+                                <td>
+                                    {% if 'Reabastecimento' in duty.duty_type.name %}
+                                        <i class="bi bi-sunrise coffee-icon"></i>
+                                    {% else %}
+                                        <i class="bi bi-sunset coffee-icon"></i>
+                                    {% endif %}
+                                    {{ duty.duty_type.name }}
+                                </td>
+                                <td>{{ duty.duty_type.time|time:"H:i" }}</td>
+                                <td>
+                                    {% if duty.member.avatar %}
+                                        <img src="{{ duty.member.avatar.url }}" alt="{{ duty.member }}" class="table-avatar me-2">
+                                    {% else %}
+                                        <i class="bi bi-person-circle me-2"></i>
+                                    {% endif %}
+                                    {{ duty.member }}
+                                </td>
+                                <td>
+                                    {% if duty.completed %}
+                                        <span class="badge bg-success">Concluída</span>
+                                    {% else %}
+                                        <span class="badge {% if 'Reabastecimento' in duty.duty_type.name %}badge-morning{% else %}badge-evening{% endif %}">Pendente</span>
+                                    {% endif %}
+                                </td>
+                                {% if user.is_authenticated %}
+                                <td>
+                                    <a href="{% url 'mark_completed' duty.id %}" class="btn btn-sm {% if duty.completed %}btn-outline-danger{% else %}btn-outline-success{% endif %}">
+                                        {% if duty.completed %}
+                                            <i class="bi bi-x-circle"></i>
+                                        {% else %}
+                                            <i class="bi bi-check-circle"></i>
+                                        {% endif %}
+                                    </a>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="{% if user.is_authenticated %}7{% else %}6{% endif %}" class="text-center">
+                                    <div class="empty-message">
+                                        <i class="bi bi-calendar-x display-4 text-muted d-block mb-3"></i>
+                                        <h5>Nenhuma tarefa agendada para este período</h5>
+                                        <p class="text-muted">O cronograma está vazio ou não foi gerado ainda.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Legenda -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-coffee-light text-white">
+                    <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Legenda</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-sunrise coffee-icon me-2" style="font-size: 1.2rem;"></i>
+                                <span><strong>Reabastecimento Matinal:</strong> Troca de água e higienização da máquina pela manhã</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-sunset coffee-icon me-2" style="font-size: 1.2rem;"></i>
+                                <span><strong>Limpeza Vespertina:</strong> Limpeza completa e organização no final do dia</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.date-range-label {
+    display: inline-block;
+    background-color: var(--cream);
+    color: var(--coffee-dark);
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.holiday-badge {
+    background-color: rgba(155, 118, 83, 0.1);
+    border-left: 4px solid var(--coffee-light);
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+}
+
+.holiday-badge .date {
+    font-weight: 700;
+    color: var(--coffee-dark);
+}
+
+.holiday-badge .day {
+    font-size: 0.8rem;
+    color: var(--gray-600);
+}
+
+.holiday-badge .name {
+    font-weight: 500;
+    margin-top: 0.2rem;
+}
+
+.table-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.empty-message {
+    padding: 2rem 0;
+}
+
+.filter-btn.active {
+    background-color: var(--coffee-medium);
+    color: white;
+}
+
+/* Estilos para o filtro responsivo */
+@media (max-width: 767.98px) {
+    .btn-group {
+        width: 100%;
+        margin-top: 0.5rem;
+    }
+    
+    .btn-group .btn {
+        flex: 1;
+    }
+}
+</style>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Funcionalidade de busca na tabela
+    const searchInput = document.getElementById('scheduleSearch');
+    const scheduleTable = document.getElementById('scheduleTable');
+    const dutyRows = document.querySelectorAll('.duty-row');
+    
+    searchInput.addEventListener('keyup', function() {
+        const searchTerm = this.value.toLowerCase();
+        
+        dutyRows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            if(text.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+    
+    // Funcionalidade de filtro (Manhã/Tarde)
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Remove classe ativa de todos os botões
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            
+            // Adiciona classe ativa ao botão clicado
+            this.classList.add('active');
+            
+            const filter = this.getAttribute('data-filter');
+            
+            dutyRows.forEach(row => {
+                if(filter === 'all') {
+                    row.style.display = '';
+                } else if(filter === 'morning' && row.classList.contains('morning-duty')) {
+                    row.style.display = '';
+                } else if(filter === 'evening' && row.classList.contains('evening-duty')) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

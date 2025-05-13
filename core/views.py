@@ -8,9 +8,13 @@ from datetime import timedelta, date
 from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Count
+#importar models
+from django.db import models
 
 from .models import TeamMember, Holiday, DutyType, DutySchedule
 from .forms import HolidayForm, DutyScheduleForm, ProfileForm, CustomPasswordChangeForm
+
+# Trecho atualizado da função home_view em core/views.py
 
 def home_view(request):
     """Página inicial com visão geral das atividades do dia"""
@@ -27,11 +31,13 @@ def home_view(request):
     ).select_related('member', 'duty_type').order_by('date', 'duty_type__time')
     
     # Estatísticas
+    # Alteramos para somar o campo coffees_served em vez de apenas contar registros
+    total_coffees = DutySchedule.objects.filter(
+        completed=True
+    ).aggregate(models.Sum('coffees_served'))['coffees_served__sum'] or 0
+    
     stats = {
-        'total_coffees': DutySchedule.objects.filter(
-            duty_type__name__icontains='Reabastecimento', 
-            completed=True
-        ).count(),
+        'total_coffees': total_coffees,
         'total_cleanings': DutySchedule.objects.filter(
             duty_type__name__icontains='Limpeza', 
             completed=True
@@ -46,7 +52,6 @@ def home_view(request):
         'stats': stats,
         'today_date': today,
     })
-
 def schedule_view(request):
     """Exibe o cronograma completo"""
     today = timezone.now().date()

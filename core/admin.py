@@ -22,8 +22,21 @@ class DutyTypeAdmin(admin.ModelAdmin):
 
 @admin.register(DutySchedule)
 class DutyScheduleAdmin(admin.ModelAdmin):
-    list_display = ('member', 'duty_type', 'date', 'completed', 'notification_sent')
+    list_display = ('member', 'duty_type', 'date', 'completed', 'coffees_served', 'notification_sent')
     list_filter = ('completed', 'notification_sent', 'duty_type', 'date')
     search_fields = ('member__user__username', 'member__user__first_name')
     date_hierarchy = 'date'
-    list_editable = ('completed',)
+    list_editable = ('completed', 'coffees_served')
+    fieldsets = (
+        ('Informações Básicas', {
+            'fields': ('member', 'duty_type', 'date')
+        }),
+        ('Status', {
+            'fields': ('completed', 'notification_sent')
+        }),
+        ('Estatísticas', {
+            'fields': ('coffees_served', 'notes'),
+            'classes': ('collapse',),
+            'description': 'Registre a quantidade de cafés servidos e observações adicionais'
+        })
+    )

@@ -1,5 +1,3 @@
-# core/models.py (Atualização do modelo TeamMember)
-
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -39,6 +37,8 @@ class DutySchedule(models.Model):
     date = models.DateField()
     completed = models.BooleanField(default=False)
     notification_sent = models.BooleanField(default=False)
+    coffees_served = models.PositiveIntegerField(default=0, help_text="Quantidade de cafés servidos neste turno")
+    notes = models.TextField(blank=True, null=True, help_text="Observações sobre esta escala")
     
     class Meta:
         unique_together = ('duty_type', 'date')
