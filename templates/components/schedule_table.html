@@ -11,6 +11,9 @@
                     <th scope="col">Horário</th>
                     <th scope="col">Responsável</th>
                     <th scope="col">Status</th>
+                    {% if user.is_authenticated %}
+                    <th scope="col">Ações</th>
+                    {% endif %}
                 </tr>
             </thead>
             <tbody>
@@ -27,7 +30,7 @@
                         {{ duty.duty_type.name }}
                     </td>
                     <td>{{ duty.duty_type.time|time:"H:i" }}</td>
-                    <td>{{ duty.member }}</td>
+                    <td>{{ duty.member.name }}</td>
                     <td>
                         {% if duty.completed %}
                             <span class="badge bg-success">Concluída</span>
@@ -35,10 +38,21 @@
                             <span class="badge {% if 'Reabastecimento' in duty.duty_type.name %}badge-morning{% else %}badge-evening{% endif %}">Pendente</span>
                         {% endif %}
                     </td>
+                    {% if user.is_authenticated %}
+                    <td>
+                        <a href="{% url 'mark_completed' duty.id %}" class="btn btn-sm {% if duty.completed %}btn-outline-danger{% else %}btn-outline-success{% endif %}">
+                            {% if duty.completed %}
+                                <i class="bi bi-x-circle"></i>
+                            {% else %}
+                                <i class="bi bi-check-circle"></i>
+                            {% endif %}
+                        </a>
+                    </td>
+                    {% endif %}
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6" class="text-center">Nenhuma tarefa agendada</td>
+                    <td colspan="{% if user.is_authenticated %}7{% else %}6{% endif %}" class="text-center">Nenhuma tarefa agendada</td>
                 </tr>
                 {% endfor %}
             </tbody>

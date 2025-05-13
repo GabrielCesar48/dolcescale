@@ -1,8 +1,8 @@
 <!-- templates/components/duty_card.html -->
 
 <div class="col-md-6">
-    <div class="card h-100 animated-bg">
-        <div class="card-header text-center {% if 'Reabastecimento' in duty.duty_type.name %}bg-warning text-dark{% else %}bg-purple text-white{% endif %}">
+    <div class="card h-100">
+        <div class="card-header text-center">
             {% if 'Reabastecimento' in duty.duty_type.name %}
                 <i class="bi bi-sunrise me-2"></i>
             {% else %}
@@ -11,76 +11,44 @@
             {{ duty.duty_type.name }} - {{ duty.duty_type.time|time:"H:i" }}
         </div>
         <div class="card-body text-center">
-            <div class="position-relative mb-3">
-                {% if duty.member.avatar %}
-                    <img src="{{ duty.member.avatar.url }}" alt="{{ duty.member }}" class="member-avatar">
-                {% else %}
-                    <img src="/api/placeholder/120/120" alt="{{ duty.member }}" class="member-avatar">
-                {% endif %}
-                
-                <span class="position-absolute bottom-0 end-0 translate-middle-y">
-                    <span class="badge rounded-pill {% if 'Reabastecimento' in duty.duty_type.name %}badge-morning{% else %}badge-evening{% endif %}">
-                        {% if 'Reabastecimento' in duty.duty_type.name %}
-                            <i class="bi bi-cup-hot"></i>
-                        {% else %}
-                            <i class="bi bi-droplet"></i>
-                        {% endif %}
-                    </span>
-                </span>
-            </div>
-            
-            <h4 class="card-title mb-1">{{ duty.member }}</h4>
+            {% if duty.member.avatar %}
+                <img src="{{ duty.member.avatar.url }}" alt="{{ duty.member }}" class="member-avatar mb-3">
+            {% else %}
+                <img src="/api/placeholder/120/120" alt="{{ duty.member }}" class="member-avatar mb-3">
+            {% endif %}
+            <h4 class="card-title mb-1">{{ duty.member.name }}</h4>
             <p class="text-muted mb-3">
-                {{ duty.member.user.get_full_name }}
+                {{ duty.member.email }}
             </p>
             
-            <div class="status-badge mb-3">
-                <span class="badge {% if 'Reabastecimento' in duty.duty_type.name %}badge-morning{% else %}badge-evening{% endif %}">
-                    {% if 'Reabastecimento' in duty.duty_type.name %}
-                        <i class="bi bi-cup-hot me-1"></i>
-                    {% else %}
-                        <i class="bi bi-droplet me-1"></i>
-                    {% endif %}
-                    Responsável Hoje
-                </span>
-            </div>
+            <span class="badge {% if 'Reabastecimento' in duty.duty_type.name %}badge-morning{% else %}badge-evening{% endif %}">
+                {% if 'Reabastecimento' in duty.duty_type.name %}
+                    <i class="bi bi-cup-hot me-1"></i>
+                {% else %}
+                    <i class="bi bi-droplet me-1"></i>
+                {% endif %}
+                Responsável Hoje
+            </span>
             
             <hr>
             
-            <div class="status-info mt-3">
-                <div class="d-flex justify-content-center align-items-center mb-2">
-                    {% if duty.completed %}
-                        <div class="status-icon completed me-2">
-                            <i class="bi bi-check-circle-fill"></i>
-                        </div>
-                        <div class="status-text">
-                            <span class="fw-bold text-success">Tarefa Concluída</span>
-                        </div>
-                    {% elif duty.notification_sent %}
-                        <div class="status-icon notified me-2">
-                            <i class="bi bi-envelope-check"></i>
-                        </div>
-                        <div class="status-text">
-                            <span class="fw-bold text-info">Notificação Enviada</span>
-                        </div>
-                    {% else %}
-                        <div class="status-icon pending me-2">
-                            <i class="bi bi-hourglass-split"></i>
-                        </div>
-                        <div class="status-text">
-                            <span class="fw-bold text-warning">Notificação Pendente</span>
-                        </div>
-                    {% endif %}
-                </div>
-                
-                <p class="small text-muted">
-                    {% if duty.notification_sent %}
-                        <i class="bi bi-clock-history me-1"></i>Enviado por Email
-                    {% else %}
-                        <i class="bi bi-clock me-1"></i>Prevista para {{ duty.duty_type.time|time:"H:i" }} - Email
-                    {% endif %}
-                </p>
-            </div>
+            <p class="card-text mt-3 mb-0">
+                {% if duty.completed %}
+                    <i class="bi bi-check-circle-fill text-success me-2"></i>Tarefa Concluída
+                {% elif duty.notification_sent %}
+                    <i class="bi bi-envelope-check text-info me-2"></i>Notificação Enviada
+                {% else %}
+                    <i class="bi bi-hourglass-split text-warning me-2"></i>Notificação Pendente
+                {% endif %}
+            </p>
+            
+            <p class="small text-muted">
+                {% if duty.notification_sent %}
+                    Enviado por Email
+                {% else %}
+                    Prevista para {{ duty.duty_type.time|time:"H:i" }} - Email
+                {% endif %}
+            </p>
             
             {% if user.is_authenticated %}
                 <div class="mt-3">
@@ -96,70 +64,3 @@
         </div>
     </div>
 </div>
-
-<style>
-    .bg-purple {
-        background-color: #6F42C1;
-    }
-    
-    .member-avatar {
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 3px solid var(--coffee-light);
-        box-shadow: var(--shadow-sm);
-        transition: all 0.3s ease;
-    }
-    
-    .card:hover .member-avatar {
-        transform: scale(1.05);
-        border-color: var(--coffee-dark);
-    }
-    
-    .status-icon {
-        font-size: 1.5rem;
-        line-height: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .status-icon.completed {
-        color: #28a745;
-    }
-    
-    .status-icon.notified {
-        color: #17a2b8;
-    }
-    
-    .status-icon.pending {
-        color: #ffc107;
-    }
-    
-    .badge-morning {
-        background-color: #FFC107;
-        color: #212529;
-    }
-    
-    .badge-evening {
-        background-color: #6F42C1;
-        color: white;
-    }
-    
-    @keyframes pulse {
-        0% {
-            transform: scale(1);
-        }
-        50% {
-            transform: scale(1.05);
-        }
-        100% {
-            transform: scale(1);
-        }
-    }
-    
-    .pulse {
-        animation: pulse 1s infinite;
-    }
-</style>

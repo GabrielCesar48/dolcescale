@@ -11,18 +11,32 @@ from django.db.models import Count
 from .models import TeamMember, Holiday, DutyType, DutySchedule
 from .forms import HolidayForm, DutyScheduleForm
 
+# core/views.py - Atualize a função home_view
+
 def home_view(request):
-    """Página inicial com visão geral das atividades do dia"""
+    """Página inicial com visão geral das atividades do dia e próximos dias úteis"""
     today = timezone.now().date()
     
     # Busca as tarefas de hoje
     today_duties = DutySchedule.objects.filter(date=today).select_related('member', 'duty_type')
     
-    # Busca as próximas 7 dias de tarefas
-    end_date = today + timedelta(days=6)  # 7 dias incluindo hoje
+    # Busca os feriados cadastrados
+    holidays = Holiday.objects.filter(
+        date__gte=today
+    ).values_list('date', flat=True)
+    
+    # Encontra os próximos 7 dias úteis (excluindo finais de semana e feriados)
+    upcoming_dates = []
+    current_date = today
+    while len(upcoming_dates) < 7:  # Queremos exatamente 7 dias úteis
+        # Verifica se não é final de semana (0=segunda, 6=domingo)
+        if current_date.weekday() < 5 and current_date not in holidays:
+            upcoming_dates.append(current_date)
+        current_date += timedelta(days=1)
+    
+    # Busca as tarefas para os próximos 7 dias úteis
     upcoming_duties = DutySchedule.objects.filter(
-        date__gte=today,
-        date__lte=end_date
+        date__in=upcoming_dates
     ).select_related('member', 'duty_type').order_by('date', 'duty_type__time')
     
     # Estatísticas
@@ -128,3 +142,82 @@ def mark_completed(request, duty_id):
     
     messages.success(request, f'Tarefa marcada como {"concluída" if duty.completed else "pendente"}.')
     return redirect('home')
+
+
+
+@login_required
+def team_member_list(request):
+    """Lista de membros da equipe"""
+    members = TeamMember.objects.all().order_by('name')
+    
+    return render(request, 'core/team_member_list.html', {
+        'members': members
+    })
+
+@login_required
+def team_member_create(request):
+    """Cadastro de novo membro da equipe"""
+    if request.method == 'POST':
+        form = TeamMemberForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Membro cadastrado com sucesso.')
+            return redirect('team_member_list')
+    else:
+        form = TeamMemberForm()
+    
+    return render(request, 'core/team_member_form.html', {
+        'form': form,
+        'title': 'Novo Membro'
+    })
+
+@login_required
+def team_member_edit(request, pk):
+    """Edição de membro existente"""
+    member = get_object_or_404(TeamMember, pk=pk)
+    
+    if request.method == 'POST':
+        form = TeamMemberForm(request.POST, instance=member)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Membro atualizado com sucesso.')
+            return redirect('team_member_list')
+    else:
+        form = TeamMemberForm(instance=member)
+    
+    return render(request, 'core/team_member_form.html', {
+        'form': form,
+        'member': member,
+        'title': 'Editar Membro'
+    })
+
+@login_required
+def team_member_toggle_active(request, pk):
+    """Ativar/desativar um membro da equipe"""
+    member = get_object_or_404(TeamMember, pk=pk)
+    member.is_active = not member.is_active
+    member.save()
+    
+    status = "ativado" if member.is_active else "desativado"
+    messages.success(request, f'Membro {member.name} {status} com sucesso.')
+    return redirect('team_member_list')
+
+@login_required
+def generate_schedule(request):
+    """View para gerar escala manualmente"""
+    if request.method == 'POST':
+        days = int(request.POST.get('days', 30))
+        
+        generator = ScheduleGenerator(days_to_generate=days)
+        created = generator.generate_schedule()
+        
+        if created:
+            messages.success(request, f'Sucesso! {created} escalas foram geradas.')
+        else:
+            messages.warning(request, 'Nenhuma escala foi gerada. Verifique se existem membros ativos e tipos de tarefa configurados.')
+        
+        return redirect('schedule')
+    
+    return render(request, 'core/generate_schedule.html', {
+        'title': 'Gerar Escala'
+    })
