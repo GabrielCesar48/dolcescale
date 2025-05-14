@@ -2,17 +2,19 @@
 
 import os
 from pathlib import Path
+from decouple import config, Csv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'sua-chave-secreta-aqui'
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = []
+
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
 
 # Application definition
 INSTALLED_APPS = [
@@ -99,18 +101,30 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Email Configuration (para envio de notificações)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'  # Substitua pelo seu servidor SMTP
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'seu-email@gmail.com'  # Substitua pelo seu email
-EMAIL_HOST_PASSWORD = 'sua-senha-ou-app-password'  # Substitua pela sua senha
-DEFAULT_FROM_EMAIL = 'DolceScale <seu-email@gmail.com>'
+EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = f'DolceScale <{config("EMAIL_HOST_USER", default="")}>'
+
+
+#Static files (CSS, JavaScript, Images)
+STATIC_URL = 'static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 
 # Configurações do aplicativo
+# Configurações do aplicativo
 DOLCESCALE = {
-    'MORNING_DUTY_TIME': '07:00:00',
-    'EVENING_DUTY_TIME': '17:30:00',
-    'WHATSAPP_GROUP_NAME': 'TI - Dolce Gusto',
-    'MORNING_NOTIFICATION_HOUR': 6,  # Enviar notificação às 6h da manhã
-    'EVENING_NOTIFICATION_HOUR': 17,  # Enviar notificação às 17h
+    'MORNING_DUTY_TIME': config('DOLCESCALE_MORNING_DUTY_TIME', default='07:00:00'),
+    'EVENING_DUTY_TIME': config('DOLCESCALE_EVENING_DUTY_TIME', default='17:30:00'),
+    'WHATSAPP_GROUP_NAME': config('DOLCESCALE_WHATSAPP_GROUP_NAME', default='TI - Dolce Gusto'),
+    'MORNING_NOTIFICATION_HOUR': config('DOLCESCALE_MORNING_NOTIFICATION_HOUR', default=6, cast=int),
+    'EVENING_NOTIFICATION_HOUR': config('DOLCESCALE_EVENING_NOTIFICATION_HOUR', default=17, cast=int),
 }
