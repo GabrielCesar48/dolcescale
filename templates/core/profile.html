@@ -35,14 +35,6 @@
                         <input type="hidden" name="form_type" value="profile">
                         
                         <div class="mb-3">
-                            <label for="{{ profile_form.avatar.id_for_label }}" class="form-label">Alterar Avatar</label>
-                            {{ profile_form.avatar }}
-                            {% if profile_form.avatar.errors %}
-                                <div class="text-danger small">{{ profile_form.avatar.errors }}</div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="mb-3">
                             <label for="{{ profile_form.phone.id_for_label }}" class="form-label">Telefone/WhatsApp</label>
                             {{ profile_form.phone }}
                             {% if profile_form.phone.errors %}
