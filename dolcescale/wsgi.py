@@ -1,15 +1,17 @@
 """
 WSGI config for dolcescale project.
-
-It exposes the WSGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/5.2/howto/deployment/wsgi/
 """
 
 import os
+import sys
+from pathlib import Path
 
 from django.core.wsgi import get_wsgi_application
+
+# Adicione o caminho do projeto ao PATH do Python
+path = str(Path(__file__).resolve().parent.parent)
+if path not in sys.path:
+    sys.path.append(path)
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'dolcescale.settings')
 
