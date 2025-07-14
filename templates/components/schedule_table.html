@@ -7,7 +7,6 @@
                 <tr>
                     <th scope="col">Data</th>
                     <th scope="col">Dia</th>
-                    <th scope="col">Tarefa</th>
                     <th scope="col">Horário</th>
                     <th scope="col">Responsável</th>
                     <th scope="col">Status</th>
@@ -19,28 +18,50 @@
             <tbody>
                 {% for duty in duties %}
                 <tr>
-                    <td>{{ duty.date|date:"d/m/Y" }}</td>
-                    <td>{{ duty.date|date:"l"|title }}</td>
                     <td>
-                        {% if 'Reabastecimento' in duty.duty_type.name %}
-                            <i class="bi bi-sunrise coffee-icon"></i>
-                        {% else %}
-                            <i class="bi bi-sunset coffee-icon"></i>
-                        {% endif %}
-                        {{ duty.duty_type.name }}
+                        <div class="date-display">
+                            <strong>{{ duty.date|date:"d/m" }}</strong>
+                            <small class="text-muted d-block">{{ duty.date|date:"Y" }}</small>
+                        </div>
                     </td>
-                    <td>{{ duty.duty_type.time|time:"H:i" }}</td>
-                    <td>{{ duty.member }}</td>
+                    <td>
+                        <span class="day-badge">{{ duty.date|date:"l"|title }}</span>
+                    </td>
+                    <td>
+                        <div class="time-display">
+                            <i class="bi bi-droplet-half coffee-icon me-2"></i>
+                            <strong>{{ duty.duty_type.time|time:"H:i" }}</strong>
+                            <small class="text-muted d-block">Limpeza Completa</small>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="member-display">
+                            {% if duty.member.avatar %}
+                                <img src="{{ duty.member.avatar.url }}" alt="{{ duty.member }}" class="table-avatar me-2">
+                            {% else %}
+                                <div class="table-avatar-placeholder me-2">
+                                    <i class="bi bi-person"></i>
+                                </div>
+                            {% endif %}
+                            <span class="member-name">{{ duty.member }}</span>
+                        </div>
+                    </td>
                     <td>
                         {% if duty.completed %}
-                            <span class="badge bg-success">Concluída</span>
+                            <span class="badge bg-success">
+                                <i class="bi bi-check-lg me-1"></i>Concluída
+                            </span>
                         {% else %}
-                            <span class="badge {% if 'Reabastecimento' in duty.duty_type.name %}badge-morning{% else %}badge-evening{% endif %}">Pendente</span>
+                            <span class="badge badge-cleaning-pending">
+                                <i class="bi bi-clock me-1"></i>Pendente
+                            </span>
                         {% endif %}
                     </td>
                     {% if user.is_authenticated %}
                     <td>
-                        <a href="{% url 'mark_completed' duty.id %}" class="btn btn-sm {% if duty.completed %}btn-outline-danger{% else %}btn-outline-success{% endif %}">
+                        <a href="{% url 'mark_completed' duty.id %}" 
+                           class="btn btn-sm {% if duty.completed %}btn-outline-danger{% else %}btn-outline-success{% endif %} table-action-btn"
+                           title="{% if duty.completed %}Desmarcar como concluída{% else %}Marcar como concluída{% endif %}">
                             {% if duty.completed %}
                                 <i class="bi bi-x-circle"></i>
                             {% else %}
@@ -52,7 +73,13 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="{% if user.is_authenticated %}7{% else %}6{% endif %}" class="text-center">Nenhuma tarefa agendada</td>
+                    <td colspan="{% if user.is_authenticated %}6{% else %}5{% endif %}" class="text-center">
+                        <div class="empty-message py-4">
+                            <i class="bi bi-calendar-x display-4 text-muted mb-3"></i>
+                            <h5>Nenhuma tarefa agendada</h5>
+                            <p class="text-muted">Não há limpezas programadas para este período</p>
+                        </div>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -64,3 +91,121 @@
         </a>
     </div>
 </div>
+
+<style>
+/* Estilos específicos para a nova tabela */
+.date-display {
+    text-align: center;
+}
+
+.day-badge {
+    background-color: rgba(23, 162, 184, 0.1);
+    color: #17a2b8;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.time-display {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.member-display {
+    display: flex;
+    align-items: center;
+}
+
+.table-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--coffee-light);
+}
+
+.table-avatar-placeholder {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: var(--coffee-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.9rem;
+}
+
+.member-name {
+    font-weight: 500;
+}
+
+.badge-cleaning-pending {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.table-action-btn {
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.table-action-btn:hover {
+    transform: scale(1.1);
+}
+
+.empty-message {
+    text-align: center;
+}
+
+/* Responsividade para mobile */
+@media (max-width: 767.98px) {
+    .table {
+        font-size: 0.85rem;
+    }
+    
+    .time-display {
+        align-items: center;
+        text-align: center;
+    }
+    
+    .member-display {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.25rem;
+    }
+    
+    .table-avatar,
+    .table-avatar-placeholder {
+        width: 28px;
+        height: 28px;
+        margin: 0;
+    }
+    
+    .day-badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.4rem;
+    }
+}
+
+/* Estados de hover para as linhas */
+.table tbody tr:hover {
+    background-color: rgba(23, 162, 184, 0.05);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+/* Melhor contraste para o ícone do café */
+.coffee-icon {
+    color: #17a2b8;
+    font-size: 1.1rem;
+}
+</style>

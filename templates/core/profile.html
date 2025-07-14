@@ -24,10 +24,32 @@
                         {% if user.teammember.avatar %}
                             <img src="{{ user.teammember.avatar.url }}" alt="{{ user.get_full_name }}" class="rounded-circle profile-avatar mb-3">
                         {% else %}
-                            <img src="/api/placeholder/150/150" alt="{{ user.get_full_name }}" class="rounded-circle profile-avatar mb-3">
+                            <div class="profile-avatar-placeholder mb-3">
+                                <i class="bi bi-person-circle"></i>
+                            </div>
                         {% endif %}
                         <h4>{{ user.get_full_name }}</h4>
                         <p class="text-muted">{{ user.email }}</p>
+                        
+                        <!-- Informações de horário atual -->
+                        <div class="current-schedule-info">
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <div class="schedule-stat">
+                                        <i class="bi bi-door-open text-info"></i>
+                                        <div class="stat-value">{{ user.teammember.get_exit_time_display }}</div>
+                                        <div class="stat-label">Saída</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="schedule-stat">
+                                        <i class="bi bi-droplet-half text-primary"></i>
+                                        <div class="stat-value">{{ user.teammember.get_cleaning_time_display }}</div>
+                                        <div class="stat-label">Limpeza</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
                     <form method="post" enctype="multipart/form-data">
@@ -35,7 +57,19 @@
                         <input type="hidden" name="form_type" value="profile">
                         
                         <div class="mb-3">
-                            <label for="{{ profile_form.phone.id_for_label }}" class="form-label">Telefone/WhatsApp</label>
+                            <label for="{{ profile_form.avatar.id_for_label }}" class="form-label">
+                                <i class="bi bi-camera me-2"></i>{{ profile_form.avatar.label }}
+                            </label>
+                            {{ profile_form.avatar }}
+                            {% if profile_form.avatar.errors %}
+                                <div class="text-danger small">{{ profile_form.avatar.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ profile_form.phone.id_for_label }}" class="form-label">
+                                <i class="bi bi-whatsapp me-2"></i>{{ profile_form.phone.label }}
+                            </label>
                             {{ profile_form.phone }}
                             {% if profile_form.phone.errors %}
                                 <div class="text-danger small">{{ profile_form.phone.errors }}</div>
@@ -52,9 +86,167 @@
             </div>
         </div>
         
-        <!-- Cartão de Senha -->
+        <!-- Cartão de Configuração de Horários -->
         <div class="col-md-6 mb-4">
             <div class="card shadow h-100">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-clock me-2"></i>Configuração de Horários</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" id="schedule-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="schedule">
+                        
+                        <div class="mb-3">
+                            <label for="{{ profile_form.exit_time.id_for_label }}" class="form-label">
+                                <i class="bi bi-door-open me-2"></i>{{ profile_form.exit_time.label }}
+                            </label>
+                            {{ profile_form.exit_time }}
+                            {% if profile_form.exit_time.errors %}
+                                <div class="text-danger small">{{ profile_form.exit_time.errors }}</div>
+                            {% endif %}
+                            <div class="form-text">{{ profile_form.exit_time.help_text }}</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label">
+                                <i class="bi bi-gear me-2"></i>{{ profile_form.cleaning_preference.label }}
+                            </label>
+                            <div class="preference-options">
+                                {% for value, label in profile_form.cleaning_preference.field.choices %}
+                                <div class="preference-option">
+                                    <input type="radio" 
+                                           name="{{ profile_form.cleaning_preference.name }}" 
+                                           value="{{ value }}" 
+                                           id="id_{{ profile_form.cleaning_preference.name }}_{{ forloop.counter0 }}"
+                                           class="form-check-input"
+                                           {% if profile_form.cleaning_preference.value == value %}checked{% endif %}>
+                                    <label for="id_{{ profile_form.cleaning_preference.name }}_{{ forloop.counter0 }}" 
+                                           class="form-check-label preference-label">
+                                        {{ label }}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% if profile_form.cleaning_preference.errors %}
+                                <div class="text-danger small">{{ profile_form.cleaning_preference.errors }}</div>
+                            {% endif %}
+                            <div class="form-text">{{ profile_form.cleaning_preference.help_text }}</div>
+                        </div>
+                        
+                        <!-- Prévia do horário calculado -->
+                        <div class="cleaning-preview">
+                            <div class="alert alert-light">
+                                <h6><i class="bi bi-eye me-2"></i>Prévia do seu horário</h6>
+                                <div class="preview-calculation">
+                                    <div class="calculation-step">
+                                        <span class="step-label">Saída:</span>
+                                        <span class="step-value" id="exit-preview">{{ user.teammember.get_exit_time_display }}</span>
+                                    </div>
+                                    <div class="calculation-arrow">
+                                        <i class="bi bi-arrow-down"></i>
+                                    </div>
+                                    <div class="calculation-step">
+                                        <span class="step-label">Limpeza:</span>
+                                        <span class="step-value" id="cleaning-preview">{{ user.teammember.get_cleaning_time_display }}</span>
+                                    </div>
+                                    <div class="calculation-step">
+                                        <span class="step-label">Tempo disponível:</span>
+                                        <span class="step-value" id="window-preview">{{ user.teammember.cleaning_window_minutes }} min</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-info">
+                                <i class="bi bi-clock-history me-2"></i>Atualizar Horários
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cartão de Estatísticas Pessoais -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-coffee-light text-white">
+                    <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>Suas Estatísticas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="stat-card">
+                                <i class="bi bi-list-check display-4 text-primary mb-2"></i>
+                                <h4 class="mb-1">{{ user_stats.total_duties|default:0 }}</h4>
+                                <p class="text-muted mb-0">Total de Limpezas</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="stat-card">
+                                <i class="bi bi-check-circle display-4 text-success mb-2"></i>
+                                <h4 class="mb-1">{{ user_stats.completed_duties|default:0 }}</h4>
+                                <p class="text-muted mb-0">Concluídas</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="stat-card">
+                                <i class="bi bi-percent display-4 text-info mb-2"></i>
+                                <h4 class="mb-1">
+                                    {% if user_stats.total_duties > 0 %}
+                                        {{ user_stats.completed_duties|floatformat:0 }}{{ user_stats.total_duties|floatformat:0 }}{% widthratio user_stats.completed_duties user_stats.total_duties 100 %}%
+                                    {% else %}
+                                        0%
+                                    {% endif %}
+                                </h4>
+                                <p class="text-muted mb-0">Taxa de Conclusão</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="stat-card">
+                                <i class="bi bi-calendar-event display-4 text-warning mb-2"></i>
+                                <h4 class="mb-1">
+                                    {% if user_stats.next_duty %}
+                                        {{ user_stats.next_duty.date|date:"d/m" }}
+                                    {% else %}
+                                        --
+                                    {% endif %}
+                                </h4>
+                                <p class="text-muted mb-0">Próxima Limpeza</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if user_stats.next_duty %}
+                    <div class="next-duty-info mt-3">
+                        <div class="alert alert-info">
+                            <h6><i class="bi bi-calendar-check me-2"></i>Sua próxima limpeza</h6>
+                            <p class="mb-1">
+                                <strong>{{ user_stats.next_duty.date|date:"l, d/m/Y" }}</strong> 
+                                às <strong>{{ user_stats.next_duty.duty_type.time|time:"H:i" }}</strong>
+                            </p>
+                            <small class="text-muted">
+                                {% if user_stats.next_duty.is_time_optimal_for_member %}
+                                    <i class="bi bi-check-circle text-success me-1"></i>Horário ideal para seu perfil
+                                {% else %}
+                                    <i class="bi bi-info-circle me-1"></i>{{ user_stats.next_duty.get_time_difference_display }}
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cartão de Senha -->
+    <div class="row mt-4">
+        <div class="col-md-6 mx-auto">
+            <div class="card shadow">
                 <div class="card-header bg-coffee-medium text-white">
                     <h5 class="mb-0"><i class="bi bi-lock me-2"></i>Alterar Senha</h5>
                 </div>
@@ -77,9 +269,6 @@
                             {% if password_form.new_password1.errors %}
                                 <div class="text-danger small">{{ password_form.new_password1.errors }}</div>
                             {% endif %}
-                            <div class="form-text small">
-                                {{ password_form.new_password1.help_text }}
-                            </div>
                         </div>
                         
                         <div class="mb-4">
@@ -101,4 +290,210 @@
         </div>
     </div>
 </div>
+
+<style>
+/* Estilos para o perfil */
+.profile-avatar-placeholder {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background-color: var(--coffee-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    color: white;
+    font-size: 4rem;
+}
+
+.current-schedule-info {
+    background-color: rgba(23, 162, 184, 0.1);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.schedule-stat {
+    text-align: center;
+}
+
+.schedule-stat i {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--coffee-dark);
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+/* Opções de preferência */
+.preference-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.preference-option {
+    display: flex;
+    align-items: flex-start;
+    padding: 0.75rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.preference-option:hover {
+    background-color: rgba(23, 162, 184, 0.05);
+    border-color: #17a2b8;
+}
+
+.preference-option input:checked + .preference-label {
+    color: #17a2b8;
+    font-weight: 600;
+}
+
+.preference-option input:checked {
+    border-color: #17a2b8;
+}
+
+.preference-label {
+    margin-left: 0.5rem;
+    margin-bottom: 0;
+    cursor: pointer;
+    flex: 1;
+}
+
+/* Prévia do horário */
+.cleaning-preview {
+    margin-top: 1rem;
+}
+
+.preview-calculation {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.calculation-step {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0.5rem;
+    background-color: white;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
+.step-label {
+    font-weight: 500;
+    color: #6c757d;
+}
+
+.step-value {
+    font-weight: 700;
+    color: var(--coffee-dark);
+}
+
+.calculation-arrow {
+    color: #17a2b8;
+    font-size: 1.2rem;
+}
+
+/* Estatísticas pessoais */
+.stat-card {
+    padding: 1rem;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.8);
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    background-color: white;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.next-duty-info {
+    border-top: 1px solid #dee2e6;
+    padding-top: 1rem;
+}
+
+/* Responsividade */
+@media (max-width: 767.98px) {
+    .current-schedule-info {
+        padding: 0.75rem;
+    }
+    
+    .schedule-stat i {
+        font-size: 1.2rem;
+    }
+    
+    .stat-value {
+        font-size: 1rem;
+    }
+    
+    .preference-option {
+        padding: 0.5rem;
+    }
+    
+    .calculation-step {
+        padding: 0.4rem;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Atualização dinâmica da prévia de horários
+    const exitTimeInput = document.getElementById('{{ profile_form.exit_time.id_for_label }}');
+    const preferenceInputs = document.querySelectorAll('input[name="{{ profile_form.cleaning_preference.name }}"]');
+    
+    function updatePreview() {
+        const exitTime = exitTimeInput.value;
+        const preference = document.querySelector('input[name="{{ profile_form.cleaning_preference.name }}"]:checked')?.value;
+        
+        if (exitTime && preference) {
+            // Aqui você pode fazer uma chamada AJAX para calcular o horário
+            // Por enquanto, vamos fazer o cálculo no frontend
+            
+            const [hours, minutes] = exitTime.split(':').map(Number);
+            let cleaningHours = hours;
+            let cleaningMinutes = minutes - 30;
+            
+            if (cleaningMinutes < 0) {
+                cleaningMinutes += 60;
+                cleaningHours -= 1;
+            }
+            
+            if (preference === 'early') {
+                cleaningHours = 16;
+                cleaningMinutes = 30;
+            } else if (preference === 'late') {
+                cleaningHours = 17;
+                cleaningMinutes = 30;
+            }
+            
+            const cleaningTime = `${cleaningHours.toString().padStart(2, '0')}:${cleaningMinutes.toString().padStart(2, '0')}`;
+            const windowMinutes = (hours * 60 + minutes) - (cleaningHours * 60 + cleaningMinutes);
+            
+            document.getElementById('exit-preview').textContent = exitTime;
+            document.getElementById('cleaning-preview').textContent = cleaningTime;
+            document.getElementById('window-preview').textContent = `${windowMinutes} min`;
+        }
+    }
+    
+    exitTimeInput.addEventListener('change', updatePreview);
+    preferenceInputs.forEach(input => input.addEventListener('change', updatePreview));
+});
+</script>
 {% endblock %}

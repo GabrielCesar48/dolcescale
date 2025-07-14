@@ -7,41 +7,37 @@ from django.utils import timezone
 from datetime import timedelta, date
 from django.contrib import messages
 from django.http import JsonResponse
-from django.db.models import Count
-#importar models
+from django.db.models import Count, Sum
 from django.db import models
 
 from .models import TeamMember, Holiday, DutyType, DutySchedule
 from .forms import HolidayForm, DutyScheduleForm, ProfileForm, CustomPasswordChangeForm
 
-# Trecho atualizado da função home_view em core/views.py
-
 def home_view(request):
     """Página inicial com visão geral das atividades do dia"""
     today = timezone.now().date()
     
-    # Busca as tarefas de hoje
+    # Busca a limpeza de hoje (apenas uma por dia agora)
     today_duties = DutySchedule.objects.filter(date=today).select_related('member', 'duty_type')
     
-    # Busca as próximas 7 dias de tarefas
+    # Busca as próximas 7 dias de limpezas
     end_date = today + timedelta(days=6)  # 7 dias incluindo hoje
     upcoming_duties = DutySchedule.objects.filter(
         date__gte=today,
         date__lte=end_date
     ).select_related('member', 'duty_type').order_by('date', 'duty_type__time')
     
-    # Estatísticas
-    # Alteramos para somar o campo coffees_served em vez de apenas contar registros
+    # Estatísticas atualizadas
     total_coffees = DutySchedule.objects.filter(
         completed=True
     ).aggregate(models.Sum('coffees_served'))['coffees_served__sum'] or 0
     
+    # Como agora é só limpeza, contamos todas as limpezas concluídas
+    total_cleanings = DutySchedule.objects.filter(completed=True).count()
+    
     stats = {
         'total_coffees': total_coffees,
-        'total_cleanings': DutySchedule.objects.filter(
-            duty_type__name__icontains='Limpeza', 
-            completed=True
-        ).count(),
+        'total_cleanings': total_cleanings,
         'team_members': TeamMember.objects.filter(is_active=True).count(),
         'holidays': Holiday.objects.filter(date__gte=today).count(),
     }
@@ -52,6 +48,7 @@ def home_view(request):
         'stats': stats,
         'today_date': today,
     })
+
 def schedule_view(request):
     """Exibe o cronograma completo"""
     today = timezone.now().date()
@@ -67,11 +64,20 @@ def schedule_view(request):
         date__lte=end_date
     ).order_by('date')
     
+    # Estatísticas do período
+    schedule_stats = {
+        'total_duties': duties.count(),
+        'completed_duties': duties.filter(completed=True).count(),
+        'time_16_30_count': duties.filter(duty_type__time__hour=16).count(),
+        'time_17_30_count': duties.filter(duty_type__time__hour=17).count(),
+    }
+    
     return render(request, 'core/schedule.html', {
         'duties': duties,
         'holidays': holidays,
         'start_date': today,
-        'end_date': end_date
+        'end_date': end_date,
+        'schedule_stats': schedule_stats
     })
 
 @login_required
@@ -79,7 +85,7 @@ def holiday_list(request):
     """Lista de feriados cadastrados"""
     today = timezone.now().date()
     holidays = Holiday.objects.filter(date__gte=today).order_by('date')
-    past_holidays = Holiday.objects.filter(date__lt=today).order_by('-date')
+    past_holidays = Holiday.objects.filter(date__lt=today).order_by('-date')[:10]  # Últimos 10
     
     return render(request, 'core/holiday_list.html', {
         'holidays': holidays,
@@ -125,15 +131,19 @@ def holiday_edit(request, pk):
 
 @login_required
 def mark_completed(request, duty_id):
-    """Marcar uma tarefa como concluída"""
+    """Marcar uma limpeza como concluída"""
     duty = get_object_or_404(DutySchedule, pk=duty_id)
     
-    # Alterna o estado da tarefa
+    # Alterna o estado da limpeza
     duty.completed = not duty.completed
     duty.save()
     
-    messages.success(request, f'Tarefa marcada como {"concluída" if duty.completed else "pendente"}.')
-    return redirect('home')
+    action = "concluída" if duty.completed else "pendente"
+    messages.success(request, f'Limpeza de {duty.date.strftime("%d/%m")} às {duty.duty_type.time.strftime("%H:%M")} marcada como {action}.')
+    
+    # Redireciona para a página anterior ou home
+    next_page = request.GET.get('next', 'home')
+    return redirect(next_page)
 
 def login_view(request):
     """View para login de usuário"""
@@ -186,7 +196,65 @@ def profile_view(request):
         profile_form = ProfileForm(instance=team_member)
         password_form = CustomPasswordChangeForm(request.user)
     
+    # Estatísticas do usuário
+    user_stats = {
+        'total_duties': DutySchedule.objects.filter(member=team_member).count(),
+        'completed_duties': DutySchedule.objects.filter(member=team_member, completed=True).count(),
+        'next_duty': DutySchedule.objects.filter(
+            member=team_member, 
+            date__gte=timezone.now().date(),
+            completed=False
+        ).order_by('date').first()
+    }
+    
     return render(request, 'core/profile.html', {
         'profile_form': profile_form,
         'password_form': password_form,
+        'user_stats': user_stats,
     })
+
+@login_required
+def schedule_stats_api(request):
+    """API para estatísticas do cronograma (para gráficos futuros)"""
+    today = timezone.now().date()
+    
+    # Estatísticas dos últimos 30 dias
+    start_date = today - timedelta(days=30)
+    
+    stats = {
+        'period': {
+            'start': start_date.isoformat(),
+            'end': today.isoformat()
+        },
+        'distribution_by_time': {
+            '16:30': DutySchedule.objects.filter(
+                date__gte=start_date,
+                duty_type__time__hour=16
+            ).count(),
+            '17:30': DutySchedule.objects.filter(
+                date__gte=start_date,
+                duty_type__time__hour=17
+            ).count()
+        },
+        'completion_rate': {
+            'completed': DutySchedule.objects.filter(
+                date__gte=start_date,
+                completed=True
+            ).count(),
+            'total': DutySchedule.objects.filter(date__gte=start_date).count()
+        },
+        'members_activity': {}
+    }
+    
+    # Atividade por membro
+    for member in TeamMember.objects.filter(is_active=True):
+        member_duties = DutySchedule.objects.filter(
+            member=member,
+            date__gte=start_date
+        )
+        stats['members_activity'][str(member)] = {
+            'total': member_duties.count(),
+            'completed': member_duties.filter(completed=True).count()
+        }
+    
+    return JsonResponse(stats)

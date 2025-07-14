@@ -8,11 +8,11 @@
 <!-- Hero Section -->
 <section class="hero-section">
     <div class="container">
-        <h1 class="hero-title">Escala Manutenção Dolce Gusto ADM/TI</h1>
+        <h1 class="hero-title">Escala Limpeza Dolce Gusto ADM/TI</h1>
         <div class="divider"></div>
-        <p class="hero-subtitle">Mantenha o café sempre fresco e a máquina sempre limpa</p>
+        <p class="hero-subtitle">Uma limpeza completa por dia - sempre fresca, sempre limpa</p>
         <a href="#today" class="btn btn-coffee btn-lg">
-            <i class="bi bi-cup-hot me-2"></i>Ver escala de hoje
+            <i class="bi bi-droplet-half me-2"></i>Ver limpeza de hoje
         </a>
     </div>
 </section>
@@ -25,9 +25,9 @@
             <div class="today-label">
                 <i class="bi bi-calendar-check me-1"></i>Hoje: {{ today_date|date:"d/m/Y" }}
             </div>
-            <h2>Escala do Dia</h2>
+            <h2>Limpeza do Dia</h2>
             <div class="divider"></div>
-            <p class="text-muted">Quem está responsável pela nossa Dolce Gusto hoje</p>
+            <p class="text-muted">Responsável pela limpeza completa da nossa Dolce Gusto hoje</p>
         </div>
         
         {% for duty in today_duties %}
@@ -38,8 +38,12 @@
                     <div class="empty-icon mb-3">
                         <i class="bi bi-calendar-x display-1 text-muted"></i>
                     </div>
-                    <h4>Não há tarefas agendadas para hoje</h4>
+                    <h4>Não há limpeza agendada para hoje</h4>
                     <p class="text-muted">Talvez seja feriado ou final de semana.</p>
+                    <div class="coffee-tips mt-4 p-3 bg-light rounded">
+                        <h6><i class="bi bi-lightbulb me-2"></i>Dica!</h6>
+                        <p class="mb-0 small">Mesmo sem limpeza agendada, mantenha a área organizada e limpe pequenos respingos.</p>
+                    </div>
                 </div>
             </div>
         {% endfor %}
@@ -56,6 +60,55 @@
     
     <!-- Include da tabela de cronograma -->
     {% include 'components/schedule_table.html' with duties=upcoming_duties %}
+    
+    <!-- Seção de Instruções -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card instructions-card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Nova Rotina de Limpeza
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="instruction-block">
+                                <h6 class="text-info">
+                                    <i class="bi bi-clock me-2"></i>16:30 - Para quem sai às 17:00
+                                </h6>
+                                <p class="small mb-2">Ideal para quem termina o expediente mais cedo e tem tempo para uma limpeza tranquila.</p>
+                                <ul class="small instruction-list">
+                                    <li>30 minutos antes de sair</li>
+                                    <li>Limpeza completa sem pressa</li>
+                                    <li>Deixa tudo organizado para o dia seguinte</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="instruction-block">
+                                <h6 class="text-info">
+                                    <i class="bi bi-clock me-2"></i>17:30 - Para quem sai às 18:00
+                                </h6>
+                                <p class="small mb-2">Perfeito para quem fica até mais tarde e pode fazer a limpeza no final do expediente.</p>
+                                <ul class="small instruction-list">
+                                    <li>30 minutos antes de sair</li>
+                                    <li>Última limpeza do dia</li>
+                                    <li>Máquina pronta para o próximo dia</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-light mt-3 mb-0">
+                        <i class="bi bi-check-circle text-success me-2"></i>
+                        <strong>Agora temos apenas uma limpeza completa por dia!</strong> 
+                        Isso simplifica a rotina e garante que a máquina tenha uma manutenção adequada sem sobrecarregar a equipe.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     
     <!-- Stats Cards -->
     <div class="row mt-5">
@@ -74,7 +127,7 @@
             <div class="card h-100 animated-bg">
                 <div class="card-body d-flex flex-column justify-content-center align-items-center py-4">
                     <div class="mb-3">
-                        <i class="bi bi-droplet display-4" style="color: var(--coffee-light);"></i>
+                        <i class="bi bi-droplet-half display-4" style="color: #17a2b8;"></i>
                     </div>
                     <p class="stats-number mb-1">{{ stats.total_cleanings }}</p>
                     <p class="stats-label">LIMPEZAS REALIZADAS</p>
@@ -107,26 +160,73 @@
 </div>
 
 <style>
-    .empty-state {
-        background-color: white;
-        border-radius: var(--border-radius-lg);
-        box-shadow: var(--shadow-md);
+.empty-state {
+    background-color: white;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-md);
+}
+
+.empty-icon {
+    color: var(--gray-300);
+}
+
+.today-label {
+    display: inline-block;
+    background-color: var(--cream);
+    color: var(--coffee-dark);
+    padding: 0.5rem 1.5rem;
+    border-radius: 30px;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.coffee-tips {
+    border-left: 4px solid var(--coffee-light);
+}
+
+.instructions-card {
+    box-shadow: var(--shadow-md);
+    border: none;
+}
+
+.instruction-block {
+    padding: 1rem;
+    background-color: rgba(23, 162, 184, 0.05);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    border-left: 3px solid #17a2b8;
+}
+
+.instruction-list {
+    margin-bottom: 0;
+    padding-left: 1rem;
+}
+
+.instruction-list li {
+    margin-bottom: 0.25rem;
+    color: var(--gray-600);
+}
+
+/* Animação para os cartões de instrução */
+.instruction-block {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.instruction-block:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(23, 162, 184, 0.15);
+}
+
+/* Responsividade */
+@media (max-width: 767.98px) {
+    .instruction-block {
+        margin-bottom: 1.5rem;
     }
     
-    .empty-icon {
-        color: var(--gray-300);
+    .stats-number {
+        font-size: 1.8rem;
     }
-    
-    .today-label {
-        display: inline-block;
-        background-color: var(--cream);
-        color: var(--coffee-dark);
-        padding: 0.5rem 1.5rem;
-        border-radius: 30px;
-        font-weight: 600;
-        margin-bottom: 1rem;
-        box-shadow: var(--shadow-sm);
-        transform: translateY(-50%);
-    }
+}
 </style>
 {% endblock %}
