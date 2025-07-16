@@ -1,0 +1,381 @@
+<!-- templates/pontuacao/dashboard.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Minha Pontuação{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pontos-display {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 20px;
+        padding: 40px;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        margin-bottom: 30px;
+    }
+    
+    .pontos-numero {
+        font-size: 4rem;
+        font-weight: bold;
+        margin: 20px 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .codigo-input {
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+    }
+    
+    .status-badge {
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .status-pendente {
+        background-color: #ffd93d;
+        color: #333;
+    }
+    
+    .status-aprovado {
+        background-color: #6bcf7f;
+        color: white;
+    }
+    
+    .status-rejeitado {
+        background-color: #e74c3c;
+        color: white;
+    }
+    
+    .card-header-custom {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-weight: 500;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fa;
+        cursor: pointer;
+    }
+    
+    .historico-adicao {
+        color: #28a745;
+        font-weight: 500;
+    }
+    
+    .historico-resgate {
+        color: #dc3545;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Cabeçalho com pontuação -->
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="pontos-display">
+                <h2 class="mb-0">Minha Pontuação</h2>
+                <div class="pontos-numero">
+                    {{ saldo_pontos }} pontos
+                </div>
+                <p class="mb-0">
+                    <i class="fas fa-check-circle"></i> {{ total_codigos_aprovados }} códigos aprovados | 
+                    <i class="fas fa-clock"></i> {{ total_codigos_pendentes }} pendentes
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Mensagens -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    <!-- Formulário de envio de código -->
+    <div class="row mb-4">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-header card-header-custom">
+                    <h5 class="mb-0"><i class="fas fa-plus-circle"></i> Enviar Novo Código</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="codigoForm">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            {{ form.codigo.label_tag }}
+                            {{ form.codigo }}
+                            <small class="form-text text-muted">
+                                {{ form.codigo.help_text }}
+                            </small>
+                            {% if form.codigo.errors %}
+                                <div class="text-danger mt-1">
+                                    {{ form.codigo.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-paper-plane"></i> Enviar Código
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tabs para códigos e histórico -->
+    <div class="row">
+        <div class="col-12">
+            <ul class="nav nav-tabs" id="myTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="codigos-tab" data-bs-toggle="tab" 
+                            data-bs-target="#codigos" type="button" role="tab">
+                        <i class="fas fa-list"></i> Meus Códigos
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="historico-tab" data-bs-toggle="tab" 
+                            data-bs-target="#historico" type="button" role="tab">
+                        <i class="fas fa-history"></i> Histórico de Pontos
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="tab-content" id="myTabContent">
+                <!-- Tab de Códigos -->
+                <div class="tab-pane fade show active" id="codigos" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            {% if codigos %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Código</th>
+                                                <th>Status</th>
+                                                <th>Pontos</th>
+                                                <th>Data de Envio</th>
+                                                <th>Aprovado em</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for codigo in codigos %}
+                                                <tr>
+                                                    <td class="font-monospace fw-bold">
+                                                        {{ codigo.formatar_codigo }}
+                                                    </td>
+                                                    <td>
+                                                        <span class="status-badge status-{{ codigo.status }}">
+                                                            {{ codigo.get_status_display }}
+                                                        </span>
+                                                    </td>
+                                                    <td>{{ codigo.pontos }}</td>
+                                                    <td>{{ codigo.data_envio|date:"d/m/Y H:i" }}</td>
+                                                    <td>
+                                                        {% if codigo.data_aprovacao %}
+                                                            {{ codigo.data_aprovacao|date:"d/m/Y H:i" }}
+                                                        {% else %}
+                                                            -
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <!-- Paginação -->
+                                {% if codigos.has_other_pages %}
+                                    <nav aria-label="Paginação de códigos">
+                                        <ul class="pagination justify-content-center">
+                                            {% if codigos.has_previous %}
+                                                <li class="page-item">
+                                                    <a class="page-link" href="?page_codigos={{ codigos.previous_page_number }}">
+                                                        Anterior
+                                                    </a>
+                                                </li>
+                                            {% endif %}
+                                            
+                                            {% for num in codigos.paginator.page_range %}
+                                                {% if codigos.number == num %}
+                                                    <li class="page-item active">
+                                                        <span class="page-link">{{ num }}</span>
+                                                    </li>
+                                                {% else %}
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="?page_codigos={{ num }}">{{ num }}</a>
+                                                    </li>
+                                                {% endif %}
+                                            {% endfor %}
+                                            
+                                            {% if codigos.has_next %}
+                                                <li class="page-item">
+                                                    <a class="page-link" href="?page_codigos={{ codigos.next_page_number }}">
+                                                        Próxima
+                                                    </a>
+                                                </li>
+                                            {% endif %}
+                                        </ul>
+                                    </nav>
+                                {% endif %}
+                            {% else %}
+                                <p class="text-center text-muted py-5">
+                                    <i class="fas fa-inbox fa-3x mb-3"></i><br>
+                                    Você ainda não enviou nenhum código.
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tab de Histórico -->
+                <div class="tab-pane fade" id="historico" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            {% if historico %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Data</th>
+                                                <th>Tipo</th>
+                                                <th>Pontos</th>
+                                                <th>Descrição</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for transacao in historico %}
+                                                <tr>
+                                                    <td>{{ transacao.data|date:"d/m/Y H:i" }}</td>
+                                                    <td>
+                                                        {% if transacao.tipo == 'adicao' %}
+                                                            <span class="badge bg-success">
+                                                                <i class="fas fa-plus"></i> Adição
+                                                            </span>
+                                                        {% else %}
+                                                            <span class="badge bg-danger">
+                                                                <i class="fas fa-minus"></i> Resgate
+                                                            </span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td class="{% if transacao.tipo == 'adicao' %}historico-adicao{% else %}historico-resgate{% endif %}">
+                                                        {% if transacao.tipo == 'adicao' %}+{% endif %}{{ transacao.pontos }}
+                                                    </td>
+                                                    <td>{{ transacao.descricao }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <!-- Paginação do histórico -->
+                                {% if historico.has_other_pages %}
+                                    <nav aria-label="Paginação do histórico">
+                                        <ul class="pagination justify-content-center">
+                                            {% if historico.has_previous %}
+                                                <li class="page-item">
+                                                    <a class="page-link" href="?page_historico={{ historico.previous_page_number }}#historico">
+                                                        Anterior
+                                                    </a>
+                                                </li>
+                                            {% endif %}
+                                            
+                                            {% for num in historico.paginator.page_range %}
+                                                {% if historico.number == num %}
+                                                    <li class="page-item active">
+                                                        <span class="page-link">{{ num }}</span>
+                                                    </li>
+                                                {% else %}
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="?page_historico={{ num }}#historico">{{ num }}</a>
+                                                    </li>
+                                                {% endif %}
+                                            {% endfor %}
+                                            
+                                            {% if historico.has_next %}
+                                                <li class="page-item">
+                                                    <a class="page-link" href="?page_historico={{ historico.next_page_number }}#historico">
+                                                        Próxima
+                                                    </a>
+                                                </li>
+                                            {% endif %}
+                                        </ul>
+                                    </nav>
+                                {% endif %}
+                            {% else %}
+                                <p class="text-center text-muted py-5">
+                                    <i class="fas fa-chart-line fa-3x mb-3"></i><br>
+                                    Nenhuma transação de pontos ainda.
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Máscara para o campo de código
+    const codigoInput = document.querySelector('.codigo-input');
+    
+    if (codigoInput) {
+        codigoInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\s/g, '').toUpperCase();
+            let formattedValue = '';
+            
+            // Limitar a 12 caracteres
+            value = value.substring(0, 12);
+            
+            // Adicionar espaços a cada 4 caracteres
+            for (let i = 0; i < value.length; i++) {
+                if (i > 0 && i % 4 === 0) {
+                    formattedValue += ' ';
+                }
+                formattedValue += value[i];
+            }
+            
+            e.target.value = formattedValue;
+        });
+        
+        // Converter para maiúsculas ao digitar
+        codigoInput.addEventListener('keyup', function(e) {
+            e.target.value = e.target.value.toUpperCase();
+        });
+        
+        // Prevenir caracteres especiais
+        codigoInput.addEventListener('keypress', function(e) {
+            const char = String.fromCharCode(e.which);
+            if (!/[A-Za-z0-9]/.test(char)) {
+                e.preventDefault();
+            }
+        });
+    }
+    
+    // Manter a aba ativa após reload da página
+    const hash = window.location.hash;
+    if (hash) {
+        const tab = document.querySelector(`button[data-bs-target="${hash}"]`);
+        if (tab) {
+            const bsTab = new bootstrap.Tab(tab);
+            bsTab.show();
+        }
+    }
+});
+</script>
+{% endblock %}

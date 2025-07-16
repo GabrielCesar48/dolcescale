@@ -1,0 +1,295 @@
+<!-- templates/pontuacao/admin_codigos.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Administrar Códigos{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+    }
+    
+    .filter-card {
+        background-color: #f8f9fa;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .btn-aprovar {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.875rem;
+    }
+    
+    .btn-aprovar:hover {
+        background-color: #218838;
+        color: white;
+    }
+    
+    .btn-rejeitar {
+        background-color: #dc3545;
+        color: white;
+        border: none;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.875rem;
+    }
+    
+    .btn-rejeitar:hover {
+        background-color: #c82333;
+        color: white;
+    }
+    
+    .status-badge {
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .status-pendente {
+        background-color: #ffd93d;
+        color: #333;
+    }
+    
+    .status-aprovado {
+        background-color: #6bcf7f;
+        color: white;
+    }
+    
+    .status-rejeitado {
+        background-color: #e74c3c;
+        color: white;
+    }
+    
+    .pendentes-alert {
+        background-color: #fff3cd;
+        border-color: #ffeaa7;
+        color: #856404;
+    }
+    
+    .user-info {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+    
+    .codigo-cell {
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+        font-size: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Cabeçalho -->
+    <div class="admin-header text-center">
+        <h1><i class="fas fa-cogs"></i> Administração de Códigos</h1>
+        <p class="mb-0">Gerencie os códigos enviados pelos usuários</p>
+    </div>
+    
+    <!-- Mensagens -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    <!-- Alerta de códigos pendentes -->
+    {% if total_pendentes > 0 %}
+        <div class="alert pendentes-alert d-flex align-items-center" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <div>
+                Existem <strong>{{ total_pendentes }}</strong> código(s) pendente(s) de aprovação.
+            </div>
+        </div>
+    {% endif %}
+    
+    <!-- Filtros -->
+    <div class="card filter-card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="status" class="form-label">Status</label>
+                    <select name="status" id="status" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="pendente" {% if status_filter == 'pendente' %}selected{% endif %}>
+                            Pendentes
+                        </option>
+                        <option value="aprovado" {% if status_filter == 'aprovado' %}selected{% endif %}>
+                            Aprovados
+                        </option>
+                        <option value="rejeitado" {% if status_filter == 'rejeitado' %}selected{% endif %}>
+                            Rejeitados
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="search" class="form-label">Buscar</label>
+                    <input type="text" name="search" id="search" class="form-control" 
+                           placeholder="Código, usuário ou email..." value="{{ search }}">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i> Filtrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Tabela de códigos -->
+    <div class="card">
+        <div class="card-body">
+            {% if codigos %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Usuário</th>
+                                <th>Status</th>
+                                <th>Pontos</th>
+                                <th>Data de Envio</th>
+                                <th>Aprovado/Rejeitado por</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for codigo in codigos %}
+                                <tr>
+                                    <td class="codigo-cell">{{ codigo.formatar_codigo }}</td>
+                                    <td>
+                                        <div>
+                                            <strong>{{ codigo.usuario.get_full_name|default:codigo.usuario.username }}</strong>
+                                        </div>
+                                        <div class="user-info">
+                                            {{ codigo.usuario.email }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge status-{{ codigo.status }}">
+                                            {{ codigo.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ codigo.pontos }}</td>
+                                    <td>{{ codigo.data_envio|date:"d/m/Y H:i" }}</td>
+                                    <td>
+                                        {% if codigo.aprovado_por %}
+                                            {{ codigo.aprovado_por.get_full_name|default:codigo.aprovado_por.username }}
+                                            <br>
+                                            <small class="text-muted">
+                                                {{ codigo.data_aprovacao|date:"d/m/Y H:i" }}
+                                            </small>
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if codigo.status == 'pendente' %}
+                                            <div class="btn-group" role="group">
+                                                <a href="{% url 'aprovar_codigo' codigo.id %}" 
+                                                   class="btn btn-aprovar btn-sm"
+                                                   onclick="return confirm('Confirma a aprovação do código {{ codigo.formatar_codigo }}?')">
+                                                    <i class="fas fa-check"></i> Aprovar
+                                                </a>
+                                                <a href="{% url 'rejeitar_codigo' codigo.id %}" 
+                                                   class="btn btn-rejeitar btn-sm">
+                                                    <i class="fas fa-times"></i> Rejeitar
+                                                </a>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted">
+                                                {% if codigo.status == 'aprovado' %}
+                                                    <i class="fas fa-check-circle text-success"></i> Processado
+                                                {% else %}
+                                                    <i class="fas fa-times-circle text-danger"></i> Processado
+                                                {% endif %}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Paginação -->
+                {% if codigos.has_other_pages %}
+                    <nav aria-label="Paginação">
+                        <ul class="pagination justify-content-center">
+                            {% if codigos.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ codigos.previous_page_number }}&status={{ status_filter }}&search={{ search }}">
+                                        Anterior
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for num in codigos.paginator.page_range %}
+                                {% if codigos.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > codigos.number|add:'-3' and num < codigos.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}&status={{ status_filter }}&search={{ search }}">
+                                            {{ num }}
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if codigos.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ codigos.next_page_number }}&status={{ status_filter }}&search={{ search }}">
+                                        Próxima
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <p class="text-center text-muted py-5">
+                    <i class="fas fa-inbox fa-3x mb-3"></i><br>
+                    Nenhum código encontrado com os filtros aplicados.
+                </p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Links rápidos -->
+    <div class="mt-4 text-center">
+        <a href="{% url 'admin_usuarios_pontos' %}" class="btn btn-secondary">
+            <i class="fas fa-users"></i> Gerenciar Pontos dos Usuários
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit do formulário ao mudar o status
+    const statusSelect = document.getElementById('status');
+    if (statusSelect) {
+        statusSelect.addEventListener('change', function() {
+            this.form.submit();
+        });
+    }
+});
+</script>
+{% endblock %}

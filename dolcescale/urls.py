@@ -8,6 +8,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('core.urls')),
+    path('pontuacao/', include('pontuacao.urls')),
 ]
 
 # Adiciona URLs para servir arquivos de mídia em desenvolvimento

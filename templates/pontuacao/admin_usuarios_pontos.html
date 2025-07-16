@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block title %}Gerenciar Pontos dos Usuários{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h1 class="text-center mb-4">
+        <i class="fas fa-users"></i> Gerenciar Pontos dos Usuários
+    </h1>
+    
+    <!-- Busca -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-10">
+                    <input type="text" name="search" class="form-control" 
+                           placeholder="Buscar por nome, username ou email..." value="{{ search }}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i> Buscar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Lista de usuários -->
+    <div class="card">
+        <div class="card-body">
+            {% if usuarios %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Usuário</th>
+                                <th>Email</th>
+                                <th>Saldo de Pontos</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for usuario in usuarios %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ usuario.get_full_name|default:usuario.username }}</strong>
+                                    </td>
+                                    <td>{{ usuario.email }}</td>
+                                    <td>
+                                        <span class="badge bg-primary fs-6">
+                                            {{ usuario.saldo }} pontos
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'resgatar_pontos' usuario.id %}" 
+                                           class="btn btn-warning btn-sm">
+                                            <i class="fas fa-gift"></i> Resgatar Pontos
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Paginação -->
+                {% if usuarios.has_other_pages %}
+                    <nav>
+                        <ul class="pagination justify-content-center">
+                            {% if usuarios.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ usuarios.previous_page_number }}&search={{ search }}">
+                                        Anterior
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for num in usuarios.paginator.page_range %}
+                                {% if usuarios.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}&search={{ search }}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if usuarios.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ usuarios.next_page_number }}&search={{ search }}">
+                                        Próxima
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <p class="text-center text-muted py-5">
+                    Nenhum usuário com pontos encontrado.
+                </p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="mt-4 text-center">
+        <a href="{% url 'admin_codigos' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar para Códigos
+        </a>
+    </div>
+</div>
+{% endblock %}

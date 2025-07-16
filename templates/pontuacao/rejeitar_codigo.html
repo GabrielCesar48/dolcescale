@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Rejeitar Código{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-6 mx-auto">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">Rejeitar Código</h5>
+                </div>
+                <div class="card-body">
+                    <p>Você está prestes a rejeitar o código:</p>
+                    <p class="text-center">
+                        <strong class="h4 font-monospace">{{ codigo.formatar_codigo }}</strong>
+                    </p>
+                    <p>Enviado por: <strong>{{ codigo.usuario.get_full_name|default:codigo.usuario.username }}</strong></p>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="observacoes" class="form-label">Motivo da rejeição (opcional)</label>
+                            <textarea name="observacoes" id="observacoes" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'admin_codigos' %}" class="btn btn-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-times"></i> Confirmar Rejeição
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
