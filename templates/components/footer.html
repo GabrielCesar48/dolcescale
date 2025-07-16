@@ -1,4 +1,30 @@
-<!-- templates/components/footer.html -->
+{% load static %}
+{% block extra_css %}
+<style>
+    html, body {
+        height: 100%;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    main {
+        flex: 1;
+    }
+
+    .footer {
+        flex-shrink: 0;
+    }
+
+    .bg-coffee-light {
+        background-color: var(--coffee-light);
+    }
+    
+    .text-cream {
+        color: var(--cream);
+    }
+</style>
+{% endblock %}
 
 <footer class="footer mt-5 py-4">
     <div class="container">
@@ -30,13 +56,3 @@
         </div>
     </div>
 </footer>
-
-<style>
-    .bg-coffee-light {
-        background-color: var(--coffee-light);
-    }
-    
-    .text-cream {
-        color: var(--cream);
-    }
-</style>

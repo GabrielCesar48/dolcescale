@@ -9,10 +9,11 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Count, Sum
 from django.db import models
+from .models import TeamMember, Holiday, DutySchedule
+from .forms import HolidayForm, ProfileForm, CustomPasswordChangeForm
+from django.contrib.auth.decorators import login_required
 
-from .models import TeamMember, Holiday, DutyType, DutySchedule
-from .forms import HolidayForm, DutyScheduleForm, ProfileForm, CustomPasswordChangeForm
-
+@login_required
 def home_view(request):
     """Página inicial com visão geral das atividades do dia"""
     today = timezone.now().date()
@@ -49,6 +50,7 @@ def home_view(request):
         'today_date': today,
     })
 
+@login_required
 def schedule_view(request):
     """Exibe o cronograma completo"""
     today = timezone.now().date()

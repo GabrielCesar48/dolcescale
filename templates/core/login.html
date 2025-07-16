@@ -1,48 +1,150 @@
-<!-- templates/core/login.html -->
 {% extends 'base.html' %}
 
 {% block title %}DolceScale - Login{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6 col-lg-5">
-            <div class="card shadow">
-                <div class="card-header bg-coffee-medium text-white text-center py-3">
-                    <h4 class="mb-0"><i class="bi bi-box-arrow-in-right me-2"></i>Login</h4>
+<style>
+    .coffee-cup {
+        position: relative;
+        width: 60px;
+        height: 60px;
+        margin: 0 auto 10px;
+    }
+
+    .coffee-cup i {
+        font-size: 60px;
+        color: #fff;
+    }
+
+    .steam {
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        width: 8px;
+        height: 20px;
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 50%;
+        animation: steamUp 2s infinite ease-in-out;
+    }
+
+    .steam:nth-child(2) {
+        left: 45%;
+        animation-delay: 0.3s;
+    }
+
+    .steam:nth-child(3) {
+        left: 55%;
+        animation-delay: 0.6s;
+    }
+
+    @keyframes steamUp {
+        0% {
+            opacity: 0;
+            transform: translateY(0) scale(1);
+        }
+        50% {
+            opacity: 1;
+            transform: translateY(-15px) scale(1.2);
+        }
+        100% {
+            opacity: 0;
+            transform: translateY(-30px) scale(1);
+        }
+    }
+
+    .card-header {
+        position: relative;
+        background: #6f4e37;
+        border-top-left-radius: 1rem;
+        border-top-right-radius: 1rem;
+    }
+
+    .btn-coffee {
+        background-color: #6f4e37;
+        color: #fff;
+        border: none;
+    }
+
+    .btn-coffee:hover {
+        background-color: #563b2c;
+    }
+
+    .card {
+        transition: transform 0.2s ease-in-out;
+        border-radius: 1rem;
+    }
+
+    .card:hover {
+        transform: scale(1.01);
+    }
+
+    input:focus {
+        border-color: #6f4e37;
+        box-shadow: 0 0 0 0.2rem rgba(111, 78, 55, 0.25);
+    }
+</style>
+
+<div class="container d-flex align-items-center justify-content-center min-vh-100">
+    <div class="col-12 col-sm-10 col-md-8 col-lg-5 col-xl-4">
+        <div class="card shadow-lg border-0">
+            <div class="card-header text-center py-4">
+                <div class="coffee-cup">
+                    <i class="bi bi-cup-hot-fill"></i>
+                    <div class="steam"></div>
+                    <div class="steam"></div>
+                    <div class="steam"></div>
                 </div>
-                <div class="card-body p-4">
-                    <form method="post">
-                        {% csrf_token %}
-                        {% if next %}
-                            <input type="hidden" name="next" value="{{ next }}">
-                        {% endif %}
-                        
-                        <div class="mb-3">
-                            <label for="id_username" class="form-label">Usuário</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                <input type="text" name="username" id="id_username" class="form-control" required>
-                            </div>
+                <h3 class="text-white mb-1 mt-4">Bem-vindo(a)</h3>
+                <p class="mb-0 small text-white-50">Aqueça seu dia com um login ☕</p>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    {% if next %}
+                        <input type="hidden" name="next" value="{{ next }}">
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label">Usuário</label>
+                        <div class="input-group has-validation">
+                            <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                            <input type="text" name="username" id="id_username" class="form-control" placeholder="Digite seu usuário" required>
                         </div>
-                        
-                        <div class="mb-4">
-                            <label for="id_password" class="form-label">Senha</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                                <input type="password" name="password" id="id_password" class="form-control" required>
-                            </div>
-                        </div>
-                        
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-coffee">
-                                <i class="bi bi-box-arrow-in-right me-2"></i>Entrar
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_password" class="form-label">Senha</label>
+                        <div class="input-group" id="show_hide_password">
+                            <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                            <input type="password" name="password" id="id_password" class="form-control" placeholder="Digite sua senha" required>
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                <i class="bi bi-eye-slash" id="iconPassword"></i>
                             </button>
                         </div>
-                    </form>
-                </div>
+                    </div>
+
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-coffee btn-lg rounded-pill">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Entrar
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-center py-3">
+                <small class="text-muted">© {{ now|date:"Y" }} DolceScale</small>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    document.getElementById("togglePassword").addEventListener("click", function () {
+        const password = document.getElementById("id_password");
+        const icon = document.getElementById("iconPassword");
+        const type = password.getAttribute("type") === "password" ? "text" : "password";
+        password.setAttribute("type", type);
+        icon.classList.toggle("bi-eye");
+        icon.classList.toggle("bi-eye-slash");
+    });
+</script>
 {% endblock %}
